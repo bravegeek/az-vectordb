@@ -1,5 +1,5 @@
-// main.bicep - Azure PostgreSQL Flexible Server with pgvector
-// Target: Cost-optimized vector database solution
+// main.bicep - Azure PostgreSQL Flexible Server with pgvector and Azure OpenAI
+// Target: Cost-optimized vector database solution with AI capabilities
 
 @description('The name of the resource group to deploy resources to')
 param resourceGroupName string = resourceGroup().name
@@ -7,6 +7,7 @@ param resourceGroupName string = resourceGroup().name
 @description('The Azure region where resources will be deployed')
 param location string = resourceGroup().location
 
+// PostgreSQL Parameters
 @description('The name of the PostgreSQL server (must be globally unique)')
 @minLength(3)
 @maxLength(63)
@@ -21,6 +22,65 @@ param adminUsername string
 @minLength(8)
 @maxLength(128)
 param adminPassword string
+
+// Azure OpenAI Parameters
+@description('Name of the Azure OpenAI service')
+param openAIServiceName string = 'oai-${uniqueString(resourceGroup().id)}'
+
+@description('The SKU of the Azure OpenAI service')
+@allowed([
+  'S0'
+  'S1'
+  'S2'
+  'S3'
+])
+param openAISku string = 'S0'
+
+@description('The name of the deployment for the embedding model')
+param embeddingDeploymentName string = 'text-embedding-ada-002'
+
+@description('The model version to use for embeddings')
+param embeddingModelVersion string = '2'
+
+// Azure Cognitive Services for text analytics (optional)
+param cognitiveServicesName string = 'cog-${uniqueString(resourceGroup().id)}'
+
+// Resource Tags
+param tags object = {
+  environment: 'Production'
+  workload: 'VectorDatabase'
+  managedBy: 'Bicep'
+}
+
+// Azure OpenAI Service
+resource openAIService 'Microsoft.CognitiveServices/accounts@2023-05-01' = {
+  name: openAIServiceName
+  location: location
+  sku: {
+    name: openAISku
+  }
+  kind: 'OpenAI'
+  properties: {
+    customSubDomainName: toLower(openAIServiceName)
+    publicNetworkAccess: 'Enabled'
+    apiProperties: {
+      capabilities: [
+        {
+          name: 'text-embedding-ada-002'
+          version: embeddingModelVersion
+        }
+      ]
+    }
+  }
+  tags: union(tags, {
+    component: 'OpenAIService'
+  })
+}
+
+// Output the OpenAI endpoint and key for reference
+output openAIEndpoint string = openAIService.properties.endpoint
+output openAIKey string = listKeys(openAIService.name, openAIService.apiVersion).key1
+output embeddingModelDeploymentName string = embeddingDeploymentName
 
 @description('The PostgreSQL server version')
 @allowed([
