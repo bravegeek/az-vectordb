@@ -42,10 +42,28 @@ graph TB
     B --> C[Azure Blob Storage]
     C --> D[Azure Cognitive Search]
     D --> E[Search Indexer]
-    E --> F[AI Enrichment Pipeline]
+    E --> F[AI Enrichment<br/>Pipeline]
     F --> G[Vector Index]
     H[Client Application] --> D
     I[Azure OpenAI] --> F
+    
+    subgraph "Data Pipeline"
+        A
+        B
+        C
+    end
+    
+    subgraph "Azure Cognitive Search"
+        D
+        E
+        F
+        G
+    end
+    
+    style A fill:#ffebee,stroke:#d32f2f,stroke-width:2px,color:#000
+    style D fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:#000
+    style I fill:#e8f5e8,stroke:#388e3c,stroke-width:2px,color:#000
+    style H fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000
 ```
 
 **Implementation Steps:**
@@ -70,11 +88,26 @@ graph TB
 ```mermaid
 graph TB
     A[SQL Server] --> B[Azure Data Factory]
-    B --> C[Azure Cosmos DB MongoDB]
+    B --> C[Azure Cosmos DB<br/>MongoDB]
     C --> D[Vector Index]
     E[Client Application] --> C
-    F[Azure OpenAI] --> G[Embedding Generation]
+    F[Azure OpenAI] --> G[Embedding<br/>Generation]
     G --> C
+    
+    subgraph "Data Pipeline"
+        A
+        B
+    end
+    
+    subgraph "Cosmos DB"
+        C
+        D
+    end
+    
+    style A fill:#ffebee,stroke:#d32f2f,stroke-width:2px,color:#000
+    style C fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:#000
+    style F fill:#e8f5e8,stroke:#388e3c,stroke-width:2px,color:#000
+    style E fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000
 ```
 
 **Implementation Steps:**
@@ -98,12 +131,27 @@ graph TB
 
 ```mermaid
 graph TB
-    A[SQL Server] --> B[Azure Database Migration Service]
-    B --> C[Azure PostgreSQL Flexible Server]
+    A[SQL Server] --> B[Azure Database<br/>Migration Service]
+    B --> C[Azure PostgreSQL<br/>Flexible Server]
     C --> D[pgvector Extension]
     E[Client Application] --> C
-    F[Azure OpenAI] --> G[Embedding Generation]
+    F[Azure OpenAI] --> G[Embedding<br/>Generation]
     G --> C
+    
+    subgraph "Migration"
+        A
+        B
+    end
+    
+    subgraph "PostgreSQL"
+        C
+        D
+    end
+    
+    style A fill:#ffebee,stroke:#d32f2f,stroke-width:2px,color:#000
+    style C fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:#000
+    style F fill:#e8f5e8,stroke:#388e3c,stroke-width:2px,color:#000
+    style E fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000
 ```
 
 **Implementation Steps:**
@@ -129,12 +177,28 @@ graph TB
 ```mermaid
 graph TB
     A[SQL Server] --> B[Azure Data Factory]
-    B --> C[Azure Container Registry]
-    C --> D[Azure Kubernetes Service]
-    D --> E[Weaviate/Qdrant/Pinecone]
+    B --> C[Azure Container<br/>Registry]
+    C --> D[Azure Kubernetes<br/>Service]
+    D --> E[Weaviate/Qdrant/<br/>Pinecone]
     F[Client Application] --> E
     G[Azure OpenAI] --> H[Embedding Service]
     H --> E
+    
+    subgraph "Data Pipeline"
+        A
+        B
+    end
+    
+    subgraph "Container Platform"
+        C
+        D
+        E
+    end
+    
+    style A fill:#ffebee,stroke:#d32f2f,stroke-width:2px,color:#000
+    style D fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:#000
+    style G fill:#e8f5e8,stroke:#388e3c,stroke-width:2px,color:#000
+    style F fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000
 ```
 
 **Implementation Steps:**
