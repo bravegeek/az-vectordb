@@ -7,14 +7,33 @@ A proof of concept for customer account matching using Azure Database for Postgr
 ```mermaid
 graph TB
     A[SQL Server Source] --> B[Azure Data Factory]
-    B --> C[Azure PostgreSQL Flexible Server]
+    B --> C[Azure PostgreSQL<br/>Flexible Server]
     C --> D[pgvector Extension]
     E[Customer Matching API] --> C
-    F[Azure OpenAI Service] --> G[Text Embedding Ada-002]
+    F[Azure OpenAI Service] --> G[Text Embedding<br/>Ada-002]
     G --> C
     H[Web Interface] --> E
     I[Azure Key Vault] --> E
     I --> F
+    
+    subgraph "Azure Cloud"
+        B
+        C
+        D
+        F
+        G
+        I
+    end
+    
+    subgraph "Application Layer"
+        E
+        H
+    end
+    
+    style A fill:#ffebee,stroke:#d32f2f,stroke-width:2px,color:#000
+    style C fill:#e3f2fd,stroke:#1976d2,stroke-width:2px,color:#000
+    style F fill:#e8f5e8,stroke:#388e3c,stroke-width:2px,color:#000
+    style E fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000
 ```
 
 ## 🚀 Features
