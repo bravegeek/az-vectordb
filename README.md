@@ -66,6 +66,22 @@ chmod +x deploy-infrastructure.sh
 ./deploy-infrastructure.sh
 ```
 
+**⚠️ Important: Parameter File Security**
+
+Before deploying, you need to create your parameter file with actual values:
+
+```bash
+# Copy the template file
+cp bicep/postgresql-pgvector.parameters.template.json bicep/postgresql-pgvector.parameters.json
+
+# Edit with your actual values
+# NEVER commit the .parameters.json file to source control!
+```
+
+Required parameter updates:
+- `adminPassword`: Strong password for PostgreSQL admin
+- `clientIpAddress`: Your current IP address for firewall access
+
 The script will:
 - Create Azure resource group
 - Deploy PostgreSQL Flexible Server with pgvector
@@ -267,6 +283,38 @@ WITH (m = 16, ef_construction = 64);
 - Azure Key Vault for secret management
 - Network security groups and firewall rules
 - Azure AD integration capabilities
+
+### Parameter File Security
+
+**🔒 Critical Security Practice:**
+
+- **Template files** (`*.parameters.template.json`) are safe to commit and contain placeholder values
+- **Actual parameter files** (`*.parameters.json`) contain sensitive data and are automatically excluded by `.gitignore`
+- **Never commit** files with real passwords, IP addresses, or connection strings
+
+**Recommended workflow:**
+```bash
+# 1. Copy template to create your parameter file
+cp bicep/postgresql-pgvector.parameters.template.json bicep/postgresql-pgvector.parameters.json
+
+# 2. Edit with actual values (this file won't be committed)
+# 3. Deploy using the actual parameter file
+# 4. For production, use Azure Key Vault references instead
+```
+
+**Production approach:**
+```json
+{
+  "adminPassword": {
+    "reference": {
+      "keyVault": {
+        "id": "/subscriptions/{sub}/resourceGroups/{rg}/providers/Microsoft.KeyVault/vaults/{vault}"
+      },
+      "secretName": "postgresql-admin-password"
+    }
+  }
+}
+```
 
 ### Additional Recommendations
 

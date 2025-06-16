@@ -48,6 +48,10 @@ local.settings.json
 *.pfx
 *.publishsettings
 *.pem
+*.parameters.json
+*.parameters.*.json
+!*.parameters.template.json
+!*.parameters.example.json
 
 # Bicep
 *.bicepparam
