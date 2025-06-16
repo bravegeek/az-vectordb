@@ -20,24 +20,6 @@ var resourcePrefix = 'vectordb-${environment}'
 var postgresqlServerName = '${resourcePrefix}-postgresql'
 var keyVaultName = '${resourcePrefix}-kv-${uniqueString(resourceGroup().id)}'
 var openAiAccountName = '${resourcePrefix}-openai'
-var dataFactoryName = '${resourcePrefix}-adf'
-var storageAccountName = '${resourcePrefix}storage${uniqueString(resourceGroup().id)}'
-
-// Storage Account for Data Factory staging
-resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = {
-  name: storageAccountName
-  location: location
-  sku: {
-    name: 'Standard_LRS'
-  }
-  kind: 'StorageV2'
-  properties: {
-    accessTier: 'Hot'
-    allowBlobPublicAccess: false
-    minimumTlsVersion: 'TLS1_2'
-    supportsHttpsTrafficOnly: true
-  }
-}
 
 // Key Vault for secrets management
 resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
@@ -160,18 +142,6 @@ resource openAiDeployment 'Microsoft.CognitiveServices/accounts/deployments@2023
   }
 }
 
-// Data Factory
-resource dataFactory 'Microsoft.DataFactory/factories@2018-06-01' = {
-  name: dataFactoryName
-  location: location
-  identity: {
-    type: 'SystemAssigned'
-  }
-  properties: {
-    publicNetworkAccess: 'Enabled'
-  }
-}
-
 // Store secrets in Key Vault
 resource postgresqlConnectionSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = {
   parent: keyVault
@@ -202,5 +172,3 @@ output postgresqlServerName string = postgresqlServer.name
 output postgresqlFQDN string = postgresqlServer.properties.fullyQualifiedDomainName
 output keyVaultName string = keyVault.name
 output openAiEndpoint string = openAiAccount.properties.endpoint
-output dataFactoryName string = dataFactory.name
-output storageAccountName string = storageAccount.name
