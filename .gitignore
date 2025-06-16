@@ -48,6 +48,7 @@ local.settings.json
 *.pfx
 *.publishsettings
 *.pem
+azlogin.txt
 *.parameters.json
 *.parameters.*.json
 !*.parameters.template.json

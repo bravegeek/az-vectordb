@@ -6,8 +6,29 @@ set -e
 
 # Configuration
 RESOURCE_GROUP_NAME="rg-vectordb-poc"
-LOCATION="eastus2"
 DEPLOYMENT_NAME="vectordb-deployment-$(date +%Y%m%d-%H%M%S)"
+
+# Read location from parameters file
+PARAMS_FILE="bicep/postgresql-pgvector.parameters.json"
+if [ -f "$PARAMS_FILE" ]; then
+    # Try to use jq if available
+    if command -v jq &> /dev/null; then
+        LOCATION=$(jq -r '.parameters.location.value' "$PARAMS_FILE")
+    else
+        # Fallback to grep/awk if jq is not available
+        LOCATION=$(grep -A 2 '"location"' "$PARAMS_FILE" | grep 'value' | awk -F'"' '{print $4}')
+    fi
+    
+    if [ -z "$LOCATION" ]; then
+        echo -e "${YELLOW}⚠️  Could not determine location from parameters file, using default 'eastus'${NC}"
+        LOCATION="eastus"
+    fi
+else
+    echo -e "${YELLOW}⚠️  Parameters file not found: $PARAMS_FILE, using default location 'eastus'${NC}"
+    LOCATION="eastus"
+fi
+
+echo -e "${GREEN}🌍 Using location: $LOCATION${NC}"
 
 # Colors for output
 RED='\033[0;31m'
@@ -37,13 +58,6 @@ fi
 SUBSCRIPTION_ID=$(az account show --query id -o tsv)
 echo -e "${GREEN}✅ Using subscription: $SUBSCRIPTION_ID${NC}"
 
-# Prompt for required parameters
-echo ""
-echo -e "${YELLOW}📝 Please provide the following information:${NC}"
-
-read -p "PostgreSQL admin password (min 8 chars, must include uppercase, lowercase, number): " -s ADMIN_PASSWORD
-echo ""
-
 # Get client IP address
 echo "Getting your public IP address..."
 CLIENT_IP=$(curl -s https://api.ipify.org)
@@ -53,9 +67,7 @@ echo -e "${GREEN}✅ Detected IP address: $CLIENT_IP${NC}"
 echo ""
 echo -e "${YELLOW}🔍 Deployment Summary:${NC}"
 echo "  Resource Group: $RESOURCE_GROUP_NAME"
-echo "  Location: $LOCATION"
 echo "  Client IP: $CLIENT_IP"
-echo "  PostgreSQL Admin User: pgadmin"
 echo ""
 
 read -p "Do you want to proceed with the deployment? (y/N): " -n 1 -r
@@ -74,48 +86,44 @@ az group create \
     --location $LOCATION \
     --output table
 
-# Update parameters file
-echo ""
-echo -e "${GREEN}📝 Updating parameters file...${NC}"
-PARAMS_FILE="bicep/postgresql-pgvector.parameters.json"
-cp "$PARAMS_FILE" "${PARAMS_FILE}.backup"
-
-# Create temporary parameters file with actual values
-cat > "$PARAMS_FILE" << EOF
-{
-  "\$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
-  "contentVersion": "1.0.0.0",
-  "parameters": {
-    "environment": {
-      "value": "dev"
-    },
-    "location": {
-      "value": "$LOCATION"
-    },
-    "adminUsername": {
-      "value": "pgadmin"
-    },
-    "adminPassword": {
-      "value": "$ADMIN_PASSWORD"
-    },
-    "clientIpAddress": {
-      "value": "$CLIENT_IP"
-    }
-  }
-}
-EOF
-
 # Deploy infrastructure
 echo ""
 echo -e "${GREEN}🏗️  Deploying infrastructure...${NC}"
 echo "This may take 10-15 minutes..."
 
-DEPLOYMENT_OUTPUT=$(az deployment group create \
-    --resource-group $RESOURCE_GROUP_NAME \
-    --name $DEPLOYMENT_NAME \
+# Deploy infrastructure and capture output
+echo -e "${YELLOW}🚀 Starting Bicep deployment...${NC}"
+
+# First, validate the deployment
+if ! az deployment group validate \
+    --resource-group "$RESOURCE_GROUP_NAME" \
+    --name "$DEPLOYMENT_NAME-validate" \
     --template-file bicep/postgresql-pgvector.bicep \
-    --parameters @$PARAMS_FILE \
-    --output json)
+    --parameters "@$PARAMS_FILE" \
+    --output none; then
+    echo -e "${RED}❌ Template validation failed${NC}"
+    exit 1
+fi
+
+echo -e "${GREEN}✅ Template validation passed${NC}"
+
+# If validation passes, proceed with the actual deployment
+if ! az deployment group create \
+    --resource-group "$RESOURCE_GROUP_NAME" \
+    --name "$DEPLOYMENT_NAME" \
+    --template-file bicep/postgresql-pgvector.bicep \
+    --parameters "@$PARAMS_FILE" \
+    --output none; then
+    echo -e "${RED}❌ Deployment failed${NC}"
+    exit 1
+fi
+
+# Get deployment details for output
+DEPLOYMENT_OUTPUT=$(az deployment group show \
+    --resource-group "$RESOURCE_GROUP_NAME" \
+    --name "$DEPLOYMENT_NAME" \
+    --query "properties.outputs" \
+    --output json 2>/dev/null || echo "{}")
 
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}✅ Infrastructure deployment completed successfully!${NC}"

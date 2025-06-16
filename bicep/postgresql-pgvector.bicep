@@ -18,7 +18,8 @@ param clientIpAddress string
 // Variables
 var resourcePrefix = 'vectordb-${environment}'
 var postgresqlServerName = '${resourcePrefix}-postgresql'
-var keyVaultName = '${resourcePrefix}-kv-${uniqueString(resourceGroup().id)}'
+// Key Vault name limited to 24 chars: vdb-{env}-{hash}
+var keyVaultName = 'vdb-${environment}-${substring(uniqueString(resourceGroup().id), 0, 5)}'
 var openAiAccountName = '${resourcePrefix}-openai'
 
 // Key Vault for secrets management
