@@ -70,17 +70,21 @@ resource postgresqlServer 'Microsoft.DBforPostgreSQL/flexibleServers@2023-06-01-
   }
 }
 
-// PostgreSQL Configuration for pgvector
-// Enable pgvector extension after deployment using Azure CLI or ARM
-// The 'vector' extension needs to be enabled after the server is created
-// as it's not available in the allowed values for shared_preload_libraries
-resource postgresqlExtension 'Microsoft.DBforPostgreSQL/flexibleServers/databases/extensions@2023-06-01-preview' = {
-  parent: customerDatabase
-  name: 'vector'
+// Database for the POC
+resource customerDatabase 'Microsoft.DBforPostgreSQL/flexibleServers/databases@2023-06-01-preview' = {
+  parent: postgresqlServer
+  name: 'customer_matching'
   properties: {
-    extensionName: 'vector'
+    charset: 'UTF8'
+    collation: 'en_US.utf8'
   }
 }
+
+// PostgreSQL Configuration for pgvector
+// NOTE: The pgvector extension should be enabled after deployment using Azure CLI:
+// az postgres flexible-server execute --name <server-name> --admin-password <password> --admin-user <admin-username> \
+//   --database-name customer_matching --file-path ./enable-pgvector.sql
+// Where enable-pgvector.sql contains: CREATE EXTENSION IF NOT EXISTS vector;
 
 // Firewall rule for client access
 resource postgresqlFirewallRule 'Microsoft.DBforPostgreSQL/flexibleServers/firewallRules@2023-06-01-preview' = {
@@ -102,15 +106,7 @@ resource postgresqlFirewallRuleAzure 'Microsoft.DBforPostgreSQL/flexibleServers/
   }
 }
 
-// Database for the POC
-resource customerDatabase 'Microsoft.DBforPostgreSQL/flexibleServers/databases@2023-06-01-preview' = {
-  parent: postgresqlServer
-  name: 'customer_matching'
-  properties: {
-    charset: 'UTF8'
-    collation: 'en_US.utf8'
-  }
-}
+
 
 // Azure OpenAI Service
 resource openAiAccount 'Microsoft.CognitiveServices/accounts@2023-10-01-preview' = {

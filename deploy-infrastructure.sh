@@ -63,6 +63,52 @@ echo "Getting your public IP address..."
 CLIENT_IP=$(curl -s https://api.ipify.org)
 echo -e "${GREEN}✅ Detected IP address: $CLIENT_IP${NC}"
 
+# Get admin password from parameters file or prompt for it
+if [ -f "$PARAMS_FILE" ]; then
+    # Try to extract password from parameters file using grep/awk
+    # Look for adminPassword in the parameters file
+    PASSWORD_LINE=$(grep -A 2 '"adminPassword"' "$PARAMS_FILE" | grep 'value')
+    
+    if [ -n "$PASSWORD_LINE" ]; then
+        # Extract password value using sed
+        # This handles passwords with special characters better than awk
+        ADMIN_PASSWORD=$(echo "$PASSWORD_LINE" | sed -E 's/.*"value"[[:space:]]*:[[:space:]]*"([^"]*)".*/\1/')
+        
+        if [ -n "$ADMIN_PASSWORD" ]; then
+            echo -e "${GREEN}✅ Using admin password from parameters file${NC}"
+        else
+            echo -e "${YELLOW}⚠️ Could not parse admin password from parameters file${NC}"
+            read -s -p "Enter PostgreSQL admin password: " ADMIN_PASSWORD
+            echo ""
+            
+            if [ -z "$ADMIN_PASSWORD" ]; then
+                echo -e "${RED}❌ Password cannot be empty${NC}"
+                exit 1
+            fi
+        fi
+    else
+        # Prompt for password if not found in parameters file
+        echo -e "${YELLOW}⚠️ Admin password not found in parameters file${NC}"
+        read -s -p "Enter PostgreSQL admin password: " ADMIN_PASSWORD
+        echo ""
+        
+        if [ -z "$ADMIN_PASSWORD" ]; then
+            echo -e "${RED}❌ Password cannot be empty${NC}"
+            exit 1
+        fi
+    fi
+else
+    # Prompt for password if parameters file doesn't exist
+    echo -e "${YELLOW}⚠️ Parameters file not found, please enter admin password manually${NC}"
+    read -s -p "Enter PostgreSQL admin password: " ADMIN_PASSWORD
+    echo ""
+    
+    if [ -z "$ADMIN_PASSWORD" ]; then
+        echo -e "${RED}❌ Password cannot be empty${NC}"
+        exit 1
+    fi
+fi
+
 # Confirm deployment
 echo ""
 echo -e "${YELLOW}🔍 Deployment Summary:${NC}"
@@ -135,20 +181,53 @@ if ! az deployment group create \
     exit 1
 fi
 
-# Get deployment details for output
-DEPLOYMENT_OUTPUT=$(az deployment group show \
+# Get deployment details for output - using direct Azure CLI queries instead of jq
+echo -e "${YELLOW}🔍 Getting deployment outputs...${NC}"
+
+# Extract outputs directly using Azure CLI queries
+POSTGRESQL_SERVER_NAME=$(az deployment group show \
     --resource-group "$RESOURCE_GROUP_NAME" \
     --name "$DEPLOYMENT_NAME" \
-    --query "properties.outputs" \
-    --output json 2>/dev/null || echo "{}")
+    --query "properties.outputs.postgresqlServerName.value" \
+    --output tsv 2>/dev/null || echo "")
 
-if [ $? -eq 0 ]; then
+POSTGRESQL_FQDN=$(az deployment group show \
+    --resource-group "$RESOURCE_GROUP_NAME" \
+    --name "$DEPLOYMENT_NAME" \
+    --query "properties.outputs.postgresqlFQDN.value" \
+    --output tsv 2>/dev/null || echo "")
+
+KEY_VAULT_NAME=$(az deployment group show \
+    --resource-group "$RESOURCE_GROUP_NAME" \
+    --name "$DEPLOYMENT_NAME" \
+    --query "properties.outputs.keyVaultName.value" \
+    --output tsv 2>/dev/null || echo "")
+
+OPENAI_ENDPOINT=$(az deployment group show \
+    --resource-group "$RESOURCE_GROUP_NAME" \
+    --name "$DEPLOYMENT_NAME" \
+    --query "properties.outputs.openAiEndpoint.value" \
+    --output tsv 2>/dev/null || echo "")
+
+if [ -n "$POSTGRESQL_SERVER_NAME" ] && [ -n "$POSTGRESQL_FQDN" ]; then
     echo -e "${GREEN}✅ Infrastructure deployment completed successfully!${NC}"
     
-    # Extract outputs
-    POSTGRESQL_FQDN=$(echo $DEPLOYMENT_OUTPUT | jq -r '.properties.outputs.postgresqlFQDN.value')
-    KEY_VAULT_NAME=$(echo $DEPLOYMENT_OUTPUT | jq -r '.properties.outputs.keyVaultName.value')
-    OPENAI_ENDPOINT=$(echo $DEPLOYMENT_OUTPUT | jq -r '.properties.outputs.openAiEndpoint.value')
+    # Enable pgvector extension
+    if [ -n "$POSTGRESQL_SERVER_NAME" ]; then
+        echo -e "${YELLOW}🔧 Enabling pgvector extension...${NC}"
+        if az postgres flexible-server execute \
+            --name "$POSTGRESQL_SERVER_NAME" \
+            --admin-password "$ADMIN_PASSWORD" \
+            --admin-user "pgadmin" \
+            --database-name "customer_matching" \
+            --file-path "./enable-pgvector.sql"; then
+            echo -e "${GREEN}✅ Successfully enabled pgvector extension${NC}"
+        else
+            echo -e "${YELLOW}⚠️ Failed to enable pgvector extension. You may need to enable it manually.${NC}"
+        fi
+    else
+        echo -e "${YELLOW}⚠️ Could not determine PostgreSQL server name. You may need to enable pgvector extension manually.${NC}"
+    fi
     
     echo ""
     echo -e "${GREEN}📋 Deployment Details:${NC}"
