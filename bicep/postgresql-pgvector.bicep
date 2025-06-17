@@ -80,9 +80,6 @@ resource postgresqlExtension 'Microsoft.DBforPostgreSQL/flexibleServers/database
   properties: {
     extensionName: 'vector'
   }
-  dependsOn: [
-    customerDatabase
-  ]
 }
 
 // Firewall rule for client access
