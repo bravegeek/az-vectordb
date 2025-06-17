@@ -95,13 +95,30 @@ echo "This may take 10-15 minutes..."
 echo -e "${YELLOW}🚀 Starting Bicep deployment...${NC}"
 
 # First, validate the deployment
+VALIDATION_LOG="${DEPLOYMENT_NAME}-validation.log"
+echo -e "${YELLOW}🔍 Validating template (output in $VALIDATION_LOG)...${NC}"
+
+# Run validation and capture output
 if ! az deployment group validate \
     --resource-group "$RESOURCE_GROUP_NAME" \
     --name "$DEPLOYMENT_NAME-validate" \
     --template-file bicep/postgresql-pgvector.bicep \
     --parameters "@$PARAMS_FILE" \
-    --output none; then
+    --output json > "$VALIDATION_LOG" 2>&1; then
+    
     echo -e "${RED}❌ Template validation failed${NC}"
+    echo -e "${YELLOW}Error details:${NC}"
+    
+    # Try to extract and display error details
+    if [ -f "$VALIDATION_LOG" ]; then
+        if command -v jq &> /dev/null; then
+            jq -r '.error.details[].message' "$VALIDATION_LOG" 2>/dev/null || cat "$VALIDATION_LOG"
+        else
+            cat "$VALIDATION_LOG"
+        fi
+    fi
+    
+    echo -e "\n${YELLOW}Full validation log: $VALIDATION_LOG${NC}"
     exit 1
 fi
 

@@ -20,7 +20,7 @@ var resourcePrefix = 'vectordb-${environment}'
 var postgresqlServerName = '${resourcePrefix}-postgresql'
 // Key Vault name limited to 24 chars: vdb-{env}-{hash}
 var keyVaultName = 'vdb-${environment}-${substring(uniqueString(resourceGroup().id), 0, 5)}'
-var openAiAccountName = '${resourcePrefix}-openai'
+var openAiAccountName = '${resourcePrefix}-openai-${substring(uniqueString(resourceGroup().id), 0, 5)}'
 
 // Key Vault for secrets management
 resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
@@ -35,14 +35,13 @@ resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
     enableRbacAuthorization: true
     enableSoftDelete: true
     softDeleteRetentionInDays: 7
-    enablePurgeProtection: false
   }
 }
 
 // PostgreSQL Flexible Server
 resource postgresqlServer 'Microsoft.DBforPostgreSQL/flexibleServers@2023-06-01-preview' = {
   name: postgresqlServerName
-  location: location
+  location: 'westus' // only westus is supported in US for now
   sku: {
     name: 'Standard_D2s_v3'
     tier: 'GeneralPurpose'
@@ -72,13 +71,18 @@ resource postgresqlServer 'Microsoft.DBforPostgreSQL/flexibleServers@2023-06-01-
 }
 
 // PostgreSQL Configuration for pgvector
-resource postgresqlConfig 'Microsoft.DBforPostgreSQL/flexibleServers/configurations@2023-06-01-preview' = {
-  parent: postgresqlServer
-  name: 'shared_preload_libraries'
+// Enable pgvector extension after deployment using Azure CLI or ARM
+// The 'vector' extension needs to be enabled after the server is created
+// as it's not available in the allowed values for shared_preload_libraries
+resource postgresqlExtension 'Microsoft.DBforPostgreSQL/flexibleServers/databases/extensions@2023-06-01-preview' = {
+  parent: customerDatabase
+  name: 'vector'
   properties: {
-    value: 'vector'
-    source: 'user-override'
+    extensionName: 'vector'
   }
+  dependsOn: [
+    customerDatabase
+  ]
 }
 
 // Firewall rule for client access
