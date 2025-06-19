@@ -233,7 +233,7 @@ if [ -n "$POSTGRESQL_SERVER_NAME" ] && [ -n "$POSTGRESQL_FQDN" ]; then
                 --admin-password "$ADMIN_PASSWORD" \
                 --admin-user "pgadmin" \
                 --database-name "customer_matching" \
-                --file-path "./enable-pgvector.sql"; then
+                --file-path "./sql/00-enable-pgvector.sql"; then
                 echo -e "${GREEN}✅ Successfully enabled pgvector extension${NC}"
             else
                 echo -e "${YELLOW}⚠️ Failed to enable pgvector extension. You may need to enable it manually.${NC}"
