@@ -5,6 +5,9 @@ param environment string = 'dev'
 @description('Location for all resources')
 param location string = resourceGroup().location
 
+@description('The Azure region where the PostgreSQL server will be deployed')
+param postgresLocation string = resourceGroup().location
+
 @description('Administrator username for PostgreSQL')
 param adminUsername string = 'pgadmin'
 
@@ -41,7 +44,7 @@ resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
 // PostgreSQL Flexible Server
 resource postgresqlServer 'Microsoft.DBforPostgreSQL/flexibleServers@2023-06-01-preview' = {
   name: postgresqlServerName
-  location: 'westus' // only westus is supported in US for now
+  location: postgresLocation // only westus is supported for this subscription
   sku: {
     name: 'Standard_B1ms'
     tier: 'Burstable'

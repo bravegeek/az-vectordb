@@ -291,9 +291,6 @@ EOF
 
     echo -e "${GREEN}✅ Created app/.env file${NC}"
     
-    # Restore original parameters file
-    mv "${PARAMS_FILE}.backup" "$PARAMS_FILE"
-    
     echo ""
     echo -e "${GREEN}🎉 Deployment Complete!${NC}"
     echo ""
@@ -309,9 +306,4 @@ EOF
     echo -e "${GREEN}🔗 Useful Links:${NC}"
     echo "  Azure Portal: https://portal.azure.com"
     echo "  Resource Group: https://portal.azure.com/#@/resource/subscriptions/$SUBSCRIPTION_ID/resourceGroups/$RESOURCE_GROUP_NAME"
-    
-else
-    echo -e "${RED}❌ Infrastructure deployment failed!${NC}"
-    mv "${PARAMS_FILE}.backup" "$PARAMS_FILE"
-    exit 1
 fi
