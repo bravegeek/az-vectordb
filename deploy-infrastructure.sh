@@ -214,16 +214,32 @@ if [ -n "$POSTGRESQL_SERVER_NAME" ] && [ -n "$POSTGRESQL_FQDN" ]; then
     
     # Enable pgvector extension
     if [ -n "$POSTGRESQL_SERVER_NAME" ]; then
-        echo -e "${YELLOW}🔧 Enabling pgvector extension...${NC}"
-        if az postgres flexible-server execute \
-            --name "$POSTGRESQL_SERVER_NAME" \
-            --admin-password "$ADMIN_PASSWORD" \
-            --admin-user "pgadmin" \
-            --database-name "customer_matching" \
-            --file-path "./enable-pgvector.sql"; then
-            echo -e "${GREEN}✅ Successfully enabled pgvector extension${NC}"
+        echo -e "${YELLOW}🔧 Allowing vector extension in server parameters...${NC}"
+        # First, allow the vector extension by updating server parameters
+        if az postgres flexible-server parameter set \
+            --resource-group "$RESOURCE_GROUP_NAME" \
+            --server-name "$POSTGRESQL_SERVER_NAME" \
+            --name "azure.extensions" \
+            --value "vector"; then
+            echo -e "${GREEN}✅ Successfully allowed vector extension in server parameters${NC}"
+            
+            # Wait a bit for the parameter change to take effect
+            echo -e "${YELLOW}⏳ Waiting for parameter changes to propagate (30 seconds)...${NC}"
+            sleep 30
+            
+            echo -e "${YELLOW}🔧 Enabling pgvector extension...${NC}"
+            if az postgres flexible-server execute \
+                --name "$POSTGRESQL_SERVER_NAME" \
+                --admin-password "$ADMIN_PASSWORD" \
+                --admin-user "pgadmin" \
+                --database-name "customer_matching" \
+                --file-path "./enable-pgvector.sql"; then
+                echo -e "${GREEN}✅ Successfully enabled pgvector extension${NC}"
+            else
+                echo -e "${YELLOW}⚠️ Failed to enable pgvector extension. You may need to enable it manually.${NC}"
+            fi
         else
-            echo -e "${YELLOW}⚠️ Failed to enable pgvector extension. You may need to enable it manually.${NC}"
+            echo -e "${YELLOW}⚠️ Failed to allow vector extension in server parameters. You may need to do this manually.${NC}"
         fi
     else
         echo -e "${YELLOW}⚠️ Could not determine PostgreSQL server name. You may need to enable pgvector extension manually.${NC}"

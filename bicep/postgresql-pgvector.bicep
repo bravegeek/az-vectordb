@@ -17,7 +17,7 @@ param clientIpAddress string
 
 // Variables
 var resourcePrefix = 'vectordb-${environment}'
-var postgresqlServerName = '${resourcePrefix}-postgresql'
+var postgresqlServerName = '${resourcePrefix}-postgresql-${substring(uniqueString(resourceGroup().id), 0, 6)}'
 // Key Vault name limited to 24 chars: vdb-{env}-{hash}
 var keyVaultName = 'vdb-${environment}-${substring(uniqueString(resourceGroup().id), 0, 5)}'
 var openAiAccountName = '${resourcePrefix}-openai-${substring(uniqueString(resourceGroup().id), 0, 5)}'
@@ -43,15 +43,15 @@ resource postgresqlServer 'Microsoft.DBforPostgreSQL/flexibleServers@2023-06-01-
   name: postgresqlServerName
   location: 'westus' // only westus is supported in US for now
   sku: {
-    name: 'Standard_D2s_v3'
-    tier: 'GeneralPurpose'
+    name: 'Standard_B1ms'
+    tier: 'Burstable'
   }
   properties: {
     administratorLogin: adminUsername
     administratorLoginPassword: adminPassword
-    version: '15'
+    version: '17'
     storage: {
-      storageSizeGB: 128
+      storageSizeGB: 32
       autoGrow: 'Enabled'
     }
     backup: {
