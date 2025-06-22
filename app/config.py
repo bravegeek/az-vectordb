@@ -43,7 +43,7 @@ class Settings(BaseSettings):
     potential_match_threshold: float = Field(default=0.75, env="POTENTIAL_MATCH_THRESHOLD")
     
     class Config:
-        env_file = ".env"
+        env_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
         case_sensitive = False
     
     def __init__(self, **kwargs):

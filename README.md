@@ -116,12 +116,75 @@ pip install -r requirements.txt
 ```bash
 # Run the FastAPI application
 python main.py
+
+## 📊 Generating and Importing Customer Data
+
+### Generate and Import Sample Data
+To generate and import sample customer data (500 records by default):
+
+```bash
+# Navigate to the app directory
+cd c:\dev\az-vectordb\app
+
+# Import sample data with random embeddings (default)
+python -m import.import_customers
+
+# Import with a specific number of records
+python -m import.import_customers --count 1000
+
+# Use real OpenAI embeddings (requires valid API key in .env)
+python -m import.import_customers --use-real-embeddings
+```
+
+### Import from External Files
+You can also import customer data from CSV or JSON files:
+
+```bash
+# Import from CSV file
+python -m import.import_customers --source path/to/customers.csv
+
+# Import from JSON file
+python -m import.import_customers --source path/to/customers.json
+
+# Explicitly specify file format (optional, auto-detected from extension)
+python -m import.import_customers --source data.csv --format csv
+```
+
+### File Formats
+
+**CSV Format:**
+```csv
+company_name,contact_name,email,phone,address_line1,address_line2,city,state,postal_code,country,industry,revenue,employee_count,website,description
+Acme Corp,John Smith,john.smith@acmecorp.com,555-123-4567,123 Main St,,New York,NY,10001,USA,Technology,10000000,150,https://acmecorp.com,Leading technology solutions provider
+```
+
+**JSON Format:**
+```json
+[
+  {
+    "company_name": "Acme Corp",
+    "contact_name": "John Smith",
+    "email": "john.smith@acmecorp.com",
+    "phone": "555-123-4567",
+    "address_line1": "123 Main St",
+    "city": "New York",
+    "state": "NY",
+    "postal_code": "10001",
+    "country": "USA",
+    "industry": "Technology",
+    "revenue": 10000000,
+    "employee_count": 150,
+    "website": "https://acmecorp.com",
+    "description": "Leading technology solutions provider"
+  }
+]
 ```
 
 The application will be available at:
 - **Web Interface**: http://localhost:8000
 - **API Documentation**: http://localhost:8000/docs
 - **Health Check**: http://localhost:8000/health
+```
 
 ## 📊 API Endpoints
 

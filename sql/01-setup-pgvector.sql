@@ -285,19 +285,6 @@ ORDER BY mr.similarity_score DESC;
 -- GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA customer_data TO your_application_user;
 
 -- Sample data insertion (for testing)
-INSERT INTO customer_data.customers (
-    company_name, contact_name, email, phone, 
-    address_line1, city, state_province, country, 
-    industry, annual_revenue, employee_count, website, description
-) VALUES 
-('Acme Corporation', 'John Smith', 'john.smith@acme.com', '+1-555-0123',
- '123 Business Ave', 'New York', 'NY', 'USA',
- 'Technology', 5000000.00, 150, 'https://acme.com', 'Leading technology solutions provider'),
-('Global Tech Solutions', 'Sarah Johnson', 'sarah.j@globaltech.com', '+1-555-0456',
- '456 Tech Blvd', 'San Francisco', 'CA', 'USA',
- 'Software', 12000000.00, 300, 'https://globaltech.com', 'Enterprise software development company'),
-('Innovation Labs Inc', 'Michael Brown', 'mbrown@innovationlabs.com', '+1-555-0789',
- '789 Innovation Dr', 'Austin', 'TX', 'USA',
- 'Research', 3000000.00, 75, 'https://innovationlabs.com', 'R&D and innovation consulting');
+-- use import_customers.py to populate the database
 
 COMMIT;
