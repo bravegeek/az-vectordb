@@ -14,9 +14,15 @@ from faker import Faker
 from sqlalchemy.orm import Session
 import numpy as np
 
-from app.database import SessionLocal, engine, initialize_database, create_tables
-from app.models import Customer
-from app.embedding_service import get_embedding_service
+import sys
+import os
+
+# Add the parent directory to the Python path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from database import SessionLocal, engine, initialize_database, create_tables
+from models import Customer
+from embedding_service import get_embedding_service
 
 # Configure logging
 logging.basicConfig(
