@@ -74,7 +74,7 @@ def check_database_connection() -> bool:
 def check_pgvector_extension() -> bool:
     """Check if pgvector extension is installed"""
     try:
-        with engine.connect() as conn:
+        with engine.connect().execution_options(isolation_level="AUTOCOMMIT") as conn:
             result = conn.execute(text("SELECT extname FROM pg_extension WHERE extname = 'vector'"))
             return result.fetchone() is not None
     except Exception as e:
@@ -85,24 +85,25 @@ def check_pgvector_extension() -> bool:
 def initialize_database():
     """Initialize database with required extensions and schema"""
     try:
+        # First check pgvector extension in autocommit mode
+        if not check_pgvector_extension():
+            logger.warning("pgvector extension not found. Please install it manually.")
+            return False
+            
+        # Then handle schema creation in a separate transaction
         with engine.connect() as conn:
-            # Check if schema exists
-            schema_check = conn.execute(text("""
-                SELECT schema_name 
-                FROM information_schema.schemata 
-                WHERE schema_name = 'customer_data'
-            """))
-            
-            if not schema_check.fetchone():
-                logger.info("Creating customer_data schema...")
-                conn.execute(text("CREATE SCHEMA IF NOT EXISTS customer_data"))
-                conn.commit()
-            
-            # Check pgvector extension
-            if not check_pgvector_extension():
-                logger.warning("pgvector extension not found. Please install it manually.")
-                return False
-            
+            with conn.begin():
+                # Check if schema exists
+                schema_check = conn.execute(text("""
+                    SELECT schema_name 
+                    FROM information_schema.schemata 
+                    WHERE schema_name = 'customer_data'
+                """))
+                
+                if not schema_check.fetchone():
+                    logger.info("Creating customer_data schema...")
+                    conn.execute(text("CREATE SCHEMA IF NOT EXISTS customer_data"))
+        
         logger.info("Database initialized successfully")
         return True
         

@@ -7,9 +7,10 @@ psycopg2-binary==2.9.10; platform_system == 'Windows' and platform_machine == 'x
 psycopg2-binary==2.9.10; platform_system == 'Windows' and platform_machine == 'AMD64'
 
 # Core dependencies
-sqlalchemy==2.0.23
+sqlalchemy==2.0.41
 alembic==1.12.1
 pydantic>=2.5.0,<3.0.0
+pydantic-settings>=2.0.0,<3.0.0
 python-dotenv==1.0.0
 
 # Azure - using versions with pre-built wheels
