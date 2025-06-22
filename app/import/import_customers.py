@@ -1,17 +1,22 @@
 """
-Script to generate sample customer records for the vector database
+Script to generate and import customer records for the vector database
 """
+import os
+import json
+import csv
 import random
 import logging
 from datetime import datetime
 from decimal import Decimal
+from pathlib import Path
+from typing import List, Dict, Any, Union
 from faker import Faker
 from sqlalchemy.orm import Session
 import numpy as np
 
-from database import SessionLocal, engine, initialize_database, create_tables
-from models import Customer
-from embedding_service import get_embedding_service
+from app.database import SessionLocal, engine, initialize_database, create_tables
+from app.models import Customer
+from app.embedding_service import get_embedding_service
 
 # Configure logging
 logging.basicConfig(
@@ -41,7 +46,52 @@ def generate_random_vector(dim=1536):
     vec = vec / np.linalg.norm(vec)
     return vec.tolist()
 
-def generate_customer_data(count=1):
+def get_data_dir() -> Path:
+    """Get the path to the data directory"""
+    # Get the project root directory (one level up from the app directory)
+    project_root = Path(__file__).parent.parent
+    data_dir = project_root / 'data'
+    data_dir.mkdir(exist_ok=True)
+    return data_dir
+
+def import_customers_from_json(file_path: Union[str, Path] = None) -> List[Dict[str, Any]]:
+    """Import customer data from a JSON file"""
+    if file_path is None:
+        file_path = get_data_dir() / 'customers.json'
+    
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            customers = json.load(f)
+        logger.info(f"Successfully imported {len(customers)} customers from {file_path}")
+        return customers
+    except Exception as e:
+        logger.error(f"Error importing from JSON file {file_path}: {str(e)}")
+        return []
+
+def import_customers_from_csv(file_path: Union[str, Path] = None) -> List[Dict[str, Any]]:
+    """Import customer data from a CSV file"""
+    if file_path is None:
+        file_path = get_data_dir() / 'customers.csv'
+    
+    customers = []
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                # Convert numeric fields from string to appropriate types
+                if 'annual_revenue' in row and row['annual_revenue']:
+                    row['annual_revenue'] = Decimal(row['annual_revenue'])
+                if 'employee_count' in row and row['employee_count']:
+                    row['employee_count'] = int(row['employee_count'])
+                customers.append(row)
+        
+        logger.info(f"Successfully imported {len(customers)} customers from {file_path}")
+        return customers
+    except Exception as e:
+        logger.error(f"Error importing from CSV file {file_path}: {str(e)}")
+        return []
+
+def generate_customer_data(count=1) -> List[Dict[str, Any]]:
     """Generate a list of customer data dictionaries"""
     customers = []
     
@@ -117,41 +167,82 @@ def create_customer_records(db: Session, customer_data, embedding_service=None):
     logger.info(f"Successfully created {created_count} customer records")
     return created_count
 
-def main(count=500, use_real_embeddings=False):
+def main(count=500, use_real_embeddings=False, source=None, file_format=None):
     """Main function to generate and insert customer records"""
-    logger.info(f"Starting generation of {count} customer records")
-    
     # Initialize database
     initialize_database()
     create_tables()
     
-    # Generate customer data
-    customer_data = generate_customer_data(count)
-    logger.info(f"Generated {len(customer_data)} customer data records")
-    
-    # Initialize embedding service if using real embeddings
+    # Initialize embedding service if needed
     embedding_service = None
     if use_real_embeddings:
         try:
             embedding_service = get_embedding_service()
+            logger.info("Using real embeddings from OpenAI")
         except Exception as e:
-            logger.warning(f"Could not initialize embedding service: {e}")
-            logger.warning("Falling back to random vector embeddings")
+            logger.warning(f"Could not initialize embedding service: {str(e)}. Using random embeddings.")
     
-    # Create database session and insert records
+    # Get customer data
+    if source:
+        logger.info(f"Importing customer data from {source}...")
+        customer_data = import_customers(source, file_format)
+        if not customer_data:
+            logger.warning("No customer data imported. Falling back to generating sample data.")
+            customer_data = generate_customer_data(count)
+    else:
+        logger.info(f"Generating {count} sample customer records...")
+        customer_data = generate_customer_data(count)
+    
+    # Create customer records in the database
     db = SessionLocal()
     try:
         created_count = create_customer_records(db, customer_data, embedding_service)
+        db.commit()
         logger.info(f"Successfully created {created_count} customer records")
+        return created_count
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error creating customer records: {str(e)}")
+        return 0
     finally:
         db.close()
 
 if __name__ == "__main__":
     import argparse
     
-    parser = argparse.ArgumentParser(description="Generate sample customer records")
-    parser.add_argument("--count", type=int, default=500, help="Number of customer records to generate")
-    parser.add_argument("--real-embeddings", action="store_true", help="Use real embeddings instead of random vectors")
+    parser = argparse.ArgumentParser(description="Generate and import customer records")
+    
+    # Data source options
+    source_group = parser.add_mutually_exclusive_group()
+    source_group.add_argument(
+        "--count", 
+        type=int, 
+        default=500, 
+        help="Number of customer records to generate (default: 500)"
+    )
+    source_group.add_argument(
+        "--source", 
+        type=str, 
+        help="Path to customer data file (CSV or JSON). Can be absolute or relative to the data directory."
+    )
+    
+    # Optional arguments
+    parser.add_argument(
+        "--format", 
+        choices=['json', 'csv'], 
+        help="Explicitly specify the file format (optional, auto-detected from file extension)"
+    )
+    parser.add_argument(
+        "--use-real-embeddings", 
+        action="store_true", 
+        help="Use real embeddings from OpenAI (requires API key)"
+    )
     
     args = parser.parse_args()
-    main(count=args.count, use_real_embeddings=args.real_embeddings)
+    
+    main(
+        count=args.count,
+        use_real_embeddings=args.use_real_embeddings,
+        source=args.source,
+        file_format=args.format
+    )
