@@ -79,7 +79,7 @@ class Settings(BaseSettings):
     cache_embeddings: bool = True
     
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file="app/.env",
         case_sensitive=False,
         extra="ignore"  # Ignore extra fields from environment
     )
