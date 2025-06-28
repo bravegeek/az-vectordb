@@ -1,12 +1,13 @@
 """Database connection and session management"""
 import logging
-from typing import Generator
+from typing import Generator, AsyncGenerator
 from sqlalchemy import create_engine, text
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.pool import StaticPool
-from config import settings
-from models import Base
+
+from .config import settings
+from app.models.database import Base
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +31,7 @@ async_engine = create_async_engine(
 
 # Session makers
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-AsyncSessionLocal = sessionmaker(
+AsyncSessionLocal = async_sessionmaker(
     async_engine, class_=AsyncSession, expire_on_commit=False
 )
 
@@ -44,7 +45,7 @@ def get_db() -> Generator[Session, None, None]:
         db.close()
 
 
-async def get_async_db() -> Generator[AsyncSession, None, None]:
+async def get_async_db() -> AsyncGenerator[AsyncSession, None]:
     """Get async database session"""
     async with AsyncSessionLocal() as session:
         yield session
