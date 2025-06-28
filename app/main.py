@@ -279,6 +279,148 @@ async def process_customer_matching(request_id: int, db: Session = Depends(get_d
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.post("/customers/match-hybrid/{request_id}", response_model=CustomerMatchResponse)
+async def process_customer_matching_hybrid(request_id: int, db: Session = Depends(get_db)):
+    """Process customer matching using hybrid approach (exact + vector + fuzzy)"""
+    start_time = time.time()
+    
+    try:
+        # Get incoming customer
+        incoming_customer = db.query(IncomingCustomer).filter(
+            IncomingCustomer.request_id == request_id
+        ).first()
+        
+        if not incoming_customer:
+            raise HTTPException(status_code=404, detail="Incoming customer not found")
+        
+        # Call the enhanced PostgreSQL function for hybrid matching
+        result = db.execute(
+            text("SELECT * FROM customer_data.process_incoming_customer_hybrid(:request_id)"),
+            {"request_id": request_id}
+        )
+        
+        # Get the matching results
+        matches_query = db.query(MatchingResult).filter(
+            MatchingResult.incoming_customer_id == request_id
+        ).order_by(desc(MatchingResult.similarity_score))
+        
+        matches = matches_query.all()
+        
+        # Format match results
+        match_results = []
+        for match in matches:
+            matched_customer = db.query(Customer).filter(
+                Customer.customer_id == match.matched_customer_id
+            ).first()
+            
+            if matched_customer:
+                match_results.append(MatchResult(
+                    match_id=match.match_id,
+                    matched_customer_id=match.matched_customer_id,
+                    matched_company_name=matched_customer.company_name,
+                    matched_contact_name=matched_customer.contact_name,
+                    matched_email=matched_customer.email,
+                    similarity_score=float(match.similarity_score),
+                    match_type=match.match_type,
+                    confidence_level=float(match.confidence_level),
+                    match_criteria=match.match_criteria or {},
+                    created_date=match.created_date
+                ))
+        
+        processing_time = (time.time() - start_time) * 1000  # Convert to milliseconds
+        
+        db.commit()
+        
+        logger.info(f"Processed hybrid matching for request {request_id}: {len(match_results)} matches found")
+        
+        return CustomerMatchResponse(
+            incoming_customer=incoming_customer,
+            matches=match_results,
+            total_matches=len(match_results),
+            processing_time_ms=processing_time
+        )
+        
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error processing hybrid customer matching: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/customers/match-exact/{request_id}", response_model=CustomerMatchResponse)
+async def process_customer_matching_exact(request_id: int, db: Session = Depends(get_db)):
+    """Process customer matching using only exact field matching"""
+    start_time = time.time()
+    
+    try:
+        # Get incoming customer
+        incoming_customer = db.query(IncomingCustomer).filter(
+            IncomingCustomer.request_id == request_id
+        ).first()
+        
+        if not incoming_customer:
+            raise HTTPException(status_code=404, detail="Incoming customer not found")
+        
+        # Call the exact matching function
+        result = db.execute(
+            text("SELECT * FROM customer_data.find_exact_matches(:request_id)"),
+            {"request_id": request_id}
+        )
+        
+        # Process exact matches
+        match_results = []
+        for row in result:
+            matched_customer = db.query(Customer).filter(
+                Customer.customer_id == row.customer_id
+            ).first()
+            
+            if matched_customer:
+                # Create match result record
+                match_result = MatchingResult(
+                    incoming_customer_id=request_id,
+                    matched_customer_id=row.customer_id,
+                    similarity_score=row.match_score,
+                    match_type='exact',
+                    confidence_level=row.match_score,
+                    match_criteria=row.match_criteria
+                )
+                db.add(match_result)
+                
+                match_results.append(MatchResult(
+                    match_id=0,  # Will be set after commit
+                    matched_customer_id=row.customer_id,
+                    matched_company_name=matched_customer.company_name,
+                    matched_contact_name=matched_customer.contact_name,
+                    matched_email=matched_customer.email,
+                    similarity_score=float(row.match_score),
+                    match_type='exact',
+                    confidence_level=float(row.match_score),
+                    match_criteria=row.match_criteria or {},
+                    created_date=datetime.now()
+                ))
+        
+        # Update processing status
+        incoming_customer.processing_status = 'processed'
+        incoming_customer.processed_date = datetime.now()
+        
+        processing_time = (time.time() - start_time) * 1000  # Convert to milliseconds
+        
+        db.commit()
+        
+        logger.info(f"Processed exact matching for request {request_id}: {len(match_results)} matches found")
+        
+        return CustomerMatchResponse(
+            incoming_customer=incoming_customer,
+            matches=match_results,
+            total_matches=len(match_results),
+            processing_time_ms=processing_time
+        )
+        
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error processing exact customer matching: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.post("/customers/search", response_model=List[SimilaritySearchResult])
 async def search_similar_customers(
     search_request: SimilaritySearchRequest,

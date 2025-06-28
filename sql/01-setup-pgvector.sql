@@ -1,5 +1,5 @@
 -- PostgreSQL pgvector Setup for Customer Matching POC
--- Run this script after deploying the infrastructure
+-- Run this script before 02-functions.sql
 
 -- Create the vector extension
 CREATE EXTENSION IF NOT EXISTS vector;
@@ -128,133 +128,7 @@ CREATE INDEX idx_matching_results_incoming ON customer_data.matching_results(inc
 CREATE INDEX idx_matching_results_matched ON customer_data.matching_results(matched_customer_id);
 CREATE INDEX idx_matching_results_score ON customer_data.matching_results(similarity_score DESC);
 
--- Function to calculate similarity between customers
-CREATE OR REPLACE FUNCTION customer_data.calculate_similarity(
-    customer1_embedding vector(1536),
-    customer2_embedding vector(1536)
-) RETURNS DECIMAL(5,4) AS $$
-BEGIN
-    RETURN 1 - (customer1_embedding <=> customer2_embedding);
-END;
-$$ LANGUAGE plpgsql IMMUTABLE;
-
--- Function to find similar customers
-CREATE OR REPLACE FUNCTION customer_data.find_similar_customers(
-    input_embedding vector(1536),
-    similarity_threshold DECIMAL(5,4) DEFAULT 0.8,
-    max_results INTEGER DEFAULT 10
-) RETURNS TABLE (
-    customer_id INTEGER,
-    company_name VARCHAR(255),
-    similarity_score DECIMAL(5,4),
-    contact_name VARCHAR(255),
-    email VARCHAR(255),
-    city VARCHAR(100),
-    country VARCHAR(100)
-) AS $$
-BEGIN
-    RETURN QUERY
-    SELECT 
-        c.customer_id,
-        c.company_name,
-        (1 - (c.full_profile_embedding <=> input_embedding))::DECIMAL(5,4) as similarity_score,
-        c.contact_name,
-        c.email,
-        c.city,
-        c.country
-    FROM customer_data.customers c
-    WHERE c.full_profile_embedding IS NOT NULL
-    AND (1 - (c.full_profile_embedding <=> input_embedding)) >= similarity_threshold
-    ORDER BY c.full_profile_embedding <=> input_embedding
-    LIMIT max_results;
-END;
-$$ LANGUAGE plpgsql;
-
--- Function to process incoming customer and find matches
-CREATE OR REPLACE FUNCTION customer_data.process_incoming_customer(
-    p_request_id INTEGER
-) RETURNS TABLE (
-    match_id INTEGER,
-    matched_customer_id INTEGER,
-    similarity_score DECIMAL(5,4),
-    match_type VARCHAR(50)
-) AS $$
-DECLARE
-    incoming_record RECORD;
-    match_record RECORD;
-    new_match_id INTEGER;
-BEGIN
-    -- Get the incoming customer record
-    SELECT * INTO incoming_record 
-    FROM customer_data.incoming_customers 
-    WHERE request_id = p_request_id;
-    
-    IF NOT FOUND THEN
-        RAISE EXCEPTION 'Incoming customer with ID % not found', p_request_id;
-    END IF;
-    
-    -- Find matches using vector similarity
-    FOR match_record IN
-        SELECT * FROM customer_data.find_similar_customers(
-            incoming_record.full_profile_embedding,
-            0.7, -- Lower threshold for more matches
-            5    -- Top 5 matches
-        )
-    LOOP
-        -- Determine match type based on similarity score
-        DECLARE
-            match_type_val VARCHAR(50);
-        BEGIN
-            IF match_record.similarity_score >= 0.95 THEN
-                match_type_val := 'exact';
-            ELSIF match_record.similarity_score >= 0.85 THEN
-                match_type_val := 'high_confidence';
-            ELSIF match_record.similarity_score >= 0.75 THEN
-                match_type_val := 'potential';
-            ELSE
-                match_type_val := 'low_confidence';
-            END IF;
-            
-            -- Insert match result
-            INSERT INTO customer_data.matching_results (
-                incoming_customer_id,
-                matched_customer_id,
-                similarity_score,
-                match_type,
-                confidence_level,
-                match_criteria
-            ) VALUES (
-                p_request_id,
-                match_record.customer_id,
-                match_record.similarity_score,
-                match_type_val,
-                match_record.similarity_score,
-                jsonb_build_object(
-                    'vector_similarity', match_record.similarity_score,
-                    'matched_company', match_record.company_name,
-                    'matched_contact', match_record.contact_name
-                )
-            ) RETURNING customer_data.matching_results.match_id INTO new_match_id;
-            
-            -- Return the match
-            match_id := new_match_id;
-            matched_customer_id := match_record.customer_id;
-            similarity_score := match_record.similarity_score;
-            match_type := match_type_val;
-            RETURN NEXT;
-        END;
-    END LOOP;
-    
-    -- Update processing status
-    UPDATE customer_data.incoming_customers 
-    SET processing_status = 'processed', processed_date = CURRENT_TIMESTAMP
-    WHERE request_id = p_request_id;
-    
-    RETURN;
-END;
-$$ LANGUAGE plpgsql;
-
--- Create a view for easy querying of match results
+-- View for easy querying of match results
 CREATE OR REPLACE VIEW customer_data.v_customer_matches AS
 SELECT 
     mr.match_id,
@@ -278,13 +152,7 @@ JOIN customer_data.incoming_customers ic ON mr.incoming_customer_id = ic.request
 JOIN customer_data.customers c ON mr.matched_customer_id = c.customer_id
 ORDER BY mr.similarity_score DESC;
 
--- Grant permissions (adjust as needed for your security model)
--- GRANT USAGE ON SCHEMA customer_data TO your_application_user;
--- GRANT SELECT, INSERT, UPDATE ON ALL TABLES IN SCHEMA customer_data TO your_application_user;
--- GRANT USAGE ON ALL SEQUENCES IN SCHEMA customer_data TO your_application_user;
--- GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA customer_data TO your_application_user;
-
--- Sample data insertion (for testing)
--- use import_customers.py to populate the database
+-- All functions and stored procedures have been moved to 02-functions.sql
+-- Please run 02-functions.sql after this file to create all required functions.
 
 COMMIT;

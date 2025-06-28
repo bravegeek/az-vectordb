@@ -1,95 +1,103 @@
-"""Configuration management for Customer Matching POC"""
+"""Configuration settings for Customer Matching POC"""
 import os
 from typing import Optional
-from pydantic import Field
-from pydantic_settings import BaseSettings
-from azure.identity import DefaultAzureCredential
-from azure.keyvault.secrets import SecretClient
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    """Application settings with Azure Key Vault integration"""
+    """Application settings"""
     
-    # Application
-    app_name: str = Field(default="Customer Matching POC", env="APP_NAME")
-    app_version: str = Field(default="1.0.0", env="APP_VERSION")
-    debug: bool = Field(default=False, env="DEBUG")
-    log_level: str = Field(default="INFO", env="LOG_LEVEL")
+    # Application settings
+    app_name: str = "Customer Matching POC"
+    app_version: str = "1.0.0"
+    debug: bool = False
+    log_level: str = "INFO"
     
-    # API Configuration
-    api_host: str = Field(default="0.0.0.0", env="API_HOST")
-    api_port: int = Field(default=8000, env="API_PORT")
+    # API settings
+    api_host: str = "0.0.0.0"
+    api_port: int = 8000
     
-    # PostgreSQL
-    postgres_host: str = Field(env="POSTGRES_HOST")
-    postgres_port: int = Field(default=5432, env="POSTGRES_PORT")
-    postgres_db: str = Field(default="customer_matching", env="POSTGRES_DB")
-    postgres_user: str = Field(env="POSTGRES_USER")
-    postgres_password: str = Field(env="POSTGRES_PASSWORD")
+    # Database settings
+    postgres_host: Optional[str] = None
+    postgres_port: int = 5432
+    postgres_user: str = "postgres"
+    postgres_password: Optional[str] = None
+    postgres_database: str = "vectordb"
+    postgres_schema: str = "customer_data"
     
-    # Azure OpenAI
-    azure_openai_endpoint: str = Field(env="AZURE_OPENAI_ENDPOINT")
-    azure_openai_api_key: str = Field(env="AZURE_OPENAI_API_KEY")
-    azure_openai_deployment_name: str = Field(default="text-embedding-ada-002", env="AZURE_OPENAI_DEPLOYMENT_NAME")
-    azure_openai_api_version: str = Field(default="2023-12-01-preview", env="AZURE_OPENAI_API_VERSION")
+    # Additional database field to match .env file
+    postgres_db: Optional[str] = None
     
-    # Azure Key Vault (Optional)
-    azure_key_vault_url: Optional[str] = Field(default=None, env="AZURE_KEY_VAULT_URL")
-    use_key_vault: bool = Field(default=False, env="USE_KEY_VAULT")
+    # Azure OpenAI settings
+    azure_openai_endpoint: Optional[str] = None
+    azure_openai_api_key: Optional[str] = None
+    azure_openai_api_version: str = "2024-02-15-preview"
+    azure_openai_deployment_name: str = "text-embedding-ada-002"
     
-    # Similarity Thresholds
-    default_similarity_threshold: float = Field(default=0.8, env="DEFAULT_SIMILARITY_THRESHOLD")
-    high_confidence_threshold: float = Field(default=0.9, env="HIGH_CONFIDENCE_THRESHOLD")
-    potential_match_threshold: float = Field(default=0.75, env="POTENTIAL_MATCH_THRESHOLD")
+    # Azure Key Vault settings (from .env file)
+    azure_key_vault_url: Optional[str] = None
+    use_key_vault: bool = False
     
-    class Config:
-        env_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env")
-        case_sensitive = False
+    # Matching strategy settings
+    default_similarity_threshold: float = 0.8
+    high_confidence_threshold: float = 0.9
+    potential_match_threshold: float = 0.75
+    exact_match_threshold: float = 0.95
     
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        if self.use_key_vault and self.azure_key_vault_url:
-            self._load_from_key_vault()
+    # Exact matching weights
+    exact_company_name_weight: float = 0.4
+    exact_email_weight: float = 0.4
+    exact_phone_weight: float = 0.2
+    exact_match_min_score: float = 0.4
     
-    def _load_from_key_vault(self):
-        """Load secrets from Azure Key Vault"""
-        try:
-            credential = DefaultAzureCredential()
-            client = SecretClient(vault_url=self.azure_key_vault_url, credential=credential)
-            
-            # Override with Key Vault values if available
-            secrets_mapping = {
-                "postgresql-connection-string": "postgres_password",
-                "openai-api-key": "azure_openai_api_key",
-                "openai-endpoint": "azure_openai_endpoint"
-            }
-            
-            for secret_name, attr_name in secrets_mapping.items():
-                try:
-                    secret = client.get_secret(secret_name)
-                    if secret_name == "postgresql-connection-string":
-                        # Parse connection string for password
-                        conn_parts = secret.value.split(';')
-                        for part in conn_parts:
-                            if part.startswith('Password='):
-                                setattr(self, attr_name, part.split('=', 1)[1])
-                    else:
-                        setattr(self, attr_name, secret.value)
-                except Exception as e:
-                    print(f"Warning: Could not retrieve secret {secret_name}: {e}")
-                    
-        except Exception as e:
-            print(f"Warning: Could not connect to Key Vault: {e}")
+    # Fuzzy matching settings
+    fuzzy_similarity_threshold: float = 0.8
+    fuzzy_max_results: int = 10
     
+    # Vector matching settings
+    vector_similarity_threshold: float = 0.7
+    vector_max_results: int = 5
+    
+    # Hybrid matching settings
+    enable_exact_matching: bool = True
+    enable_vector_matching: bool = True
+    enable_fuzzy_matching: bool = True
+    exact_matching_priority: int = 1
+    vector_matching_priority: int = 2
+    fuzzy_matching_priority: int = 3
+    
+    # Business rules
+    enable_business_rules: bool = True
+    industry_match_boost: float = 1.2
+    location_match_boost: float = 1.1
+    country_mismatch_penalty: float = 0.8
+    revenue_size_boost: bool = True
+    
+    # Performance settings
+    batch_size: int = 16
+    max_concurrent_requests: int = 10
+    cache_embeddings: bool = True
+    
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        case_sensitive=False,
+        extra="ignore"  # Ignore extra fields from environment
+    )
+    
+    def _build_db_url(self, async_mode: bool = False) -> str:
+        db_name = self.postgres_db or self.postgres_database
+        if not self.postgres_host or not self.postgres_password:
+            raise ValueError("Database host and password are required")
+        driver = "postgresql+asyncpg" if async_mode else "postgresql"
+        return f"{driver}://{self.postgres_user}:{self.postgres_password}@{self.postgres_host}:{self.postgres_port}/{db_name}"
+
     @property
     def database_url(self) -> str:
-        """Get PostgreSQL connection URL"""
-        return f"postgresql://{self.postgres_user}:{self.postgres_password}@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}?sslmode=require"
-    
+        return self._build_db_url(async_mode=False)
+
     @property
     def async_database_url(self) -> str:
-        """Get async PostgreSQL connection URL"""
-        return f"postgresql+asyncpg://{self.postgres_user}:{self.postgres_password}@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}?ssl=require"
+        return self._build_db_url(async_mode=True)
 
 
 # Global settings instance
