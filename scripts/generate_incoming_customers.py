@@ -20,6 +20,11 @@ from decimal import Decimal
 # Add the app directory to the path for imports
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
+# Set up environment file path before importing settings
+env_file_path = os.path.join(os.path.dirname(__file__), '..', 'app', '.env')
+if os.path.exists(env_file_path):
+    os.environ['ENV_FILE'] = env_file_path
+
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from app.core.config import settings
@@ -251,38 +256,38 @@ class IncomingCustomerGenerator:
             "postal_code": base_customer.postal_code,
             "country": base_customer.country,
             "industry": base_customer.industry,
-            "annual_revenue": float(base_customer.annual_revenue) if base_customer.annual_revenue else None,
+            "annual_revenue": float(base_customer.annual_revenue) if base_customer.annual_revenue is not None else None,
             "employee_count": base_customer.employee_count,
             "website": base_customer.website,
             "description": base_customer.description
         }
         
         # Apply variations based on probabilities
-        if random.random() < probs["company_name"]:
+        if random.random() < probs["company_name"] and incoming_data["company_name"] is not None:
             variation_types = ["suffix_change", "prefix_add", "typo", "abbreviation", "word_order"]
             incoming_data["company_name"] = self.create_company_name_variation(
-                base_customer.company_name, 
+                incoming_data["company_name"], 
                 random.choice(variation_types)
             )
         
-        if random.random() < probs["address"] and base_customer.address_line1:
+        if random.random() < probs["address"] and incoming_data["address_line1"] is not None:
             variation_types = ["suffix_abbreviation", "number_format"]
             incoming_data["address_line1"] = self.create_address_variation(
-                base_customer.address_line1,
+                incoming_data["address_line1"],
                 random.choice(variation_types)
             )
         
-        if random.random() < probs["email"] and base_customer.email:
+        if random.random() < probs["email"] and incoming_data["email"] is not None:
             variation_types = ["domain_change", "local_part_typo", "underscore_add"]
             incoming_data["email"] = self.create_email_variation(
-                base_customer.email,
+                incoming_data["email"],
                 random.choice(variation_types)
             )
         
-        if random.random() < probs["phone"] and base_customer.phone:
+        if random.random() < probs["phone"] and incoming_data["phone"] is not None:
             variation_types = ["format_change", "digit_typo"]
             incoming_data["phone"] = self.create_phone_variation(
-                base_customer.phone,
+                incoming_data["phone"],
                 random.choice(variation_types)
             )
         
@@ -391,7 +396,13 @@ def main():
     args = parser.parse_args()
     
     # Use provided DB URL or default from settings
-    db_url = args.db_url or settings.DATABASE_URL
+    try:
+        db_url = args.db_url or settings.database_url
+        logger.info(f"Using database URL: {db_url}")
+    except Exception as e:
+        logger.error(f"Failed to get database URL from settings: {e}")
+        logger.error("Please ensure app/.env file exists and contains database configuration")
+        sys.exit(1)
     
     try:
         # Initialize generator
