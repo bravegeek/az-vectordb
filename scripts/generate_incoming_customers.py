@@ -256,7 +256,7 @@ class IncomingCustomerGenerator:
             "postal_code": base_customer.postal_code,
             "country": base_customer.country,
             "industry": base_customer.industry,
-            "annual_revenue": float(base_customer.annual_revenue) if base_customer.annual_revenue is not None else None,
+            "annual_revenue": float(str(base_customer.annual_revenue)) if base_customer.annual_revenue is not None else None,
             "employee_count": base_customer.employee_count,
             "website": base_customer.website,
             "description": base_customer.description

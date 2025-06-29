@@ -1,5 +1,5 @@
 # Development and testing dependencies
--r requirements.txt
+-r app/requirements.txt
 
 # Testing
 pytest==7.4.3
@@ -26,4 +26,4 @@ jupyter==1.0.0
 
 # Performance profiling
 memory-profiler==0.61.0
-line-profiler==4.1.1 
+line-profiler==4.2.0 
