@@ -8,7 +8,7 @@ This guide helps you transition from the old flat project structure to the new o
 
 | Old Location | New Location | Purpose |
 |--------------|--------------|---------|
-| `app/main.py` | `app/main_new.py` | Main application entry point |
+| `app/main.py` | `app/main.py` | Main application entry point |
 | `app/config.py` | `app/core/config.py` | Configuration management |
 | `app/database.py` | `app/core/database.py` | Database connection management |
 | `app/models.py` | `app/models/database.py` + `app/models/schemas.py` | Split into DB models and API schemas |
@@ -78,7 +78,7 @@ from app.services.embedding_service import embedding_service
 
 ### ✅ Application Testing
 - [ ] Test old `main.py` still works: `python -m app.main`
-- [ ] Test new `main_new.py`: `python -m app.main_new`
+- [ ] Test new `main.py`: `python -m app.main`
 - [ ] Verify all endpoints return expected responses
 - [ ] Check API documentation at `/docs` and `/redoc`
 

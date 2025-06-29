@@ -9,7 +9,7 @@ import logging
 from datetime import datetime
 from decimal import Decimal
 from pathlib import Path
-from typing import List, Dict, Any, Union
+from typing import List, Dict, Any, Union, Optional
 from faker import Faker
 from sqlalchemy.orm import Session
 import numpy as np
@@ -20,9 +20,9 @@ import os
 # Add the parent directory to the Python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from database import SessionLocal, engine, initialize_database, create_tables
-from models import Customer
-from embedding_service import get_embedding_service
+from app.core.database import SessionLocal, engine, initialize_database, create_tables
+from app.models.database import Customer
+from app.services.embedding_service import embedding_service
 
 # Configure logging
 logging.basicConfig(
@@ -60,7 +60,7 @@ def get_data_dir() -> Path:
     data_dir.mkdir(exist_ok=True)
     return data_dir
 
-def import_customers_from_json(file_path: Union[str, Path] = None) -> List[Dict[str, Any]]:
+def import_customers_from_json(file_path: Union[str, Path, None] = None) -> List[Dict[str, Any]]:
     """Import customer data from a JSON file"""
     if file_path is None:
         file_path = get_data_dir() / 'customers.json'
@@ -74,7 +74,7 @@ def import_customers_from_json(file_path: Union[str, Path] = None) -> List[Dict[
         logger.error(f"Error importing from JSON file {file_path}: {str(e)}")
         return []
 
-def import_customers_from_csv(file_path: Union[str, Path] = None) -> List[Dict[str, Any]]:
+def import_customers_from_csv(file_path: Union[str, Path, None] = None) -> List[Dict[str, Any]]:
     """Import customer data from a CSV file"""
     if file_path is None:
         file_path = get_data_dir() / 'customers.csv'
@@ -95,6 +95,16 @@ def import_customers_from_csv(file_path: Union[str, Path] = None) -> List[Dict[s
         return customers
     except Exception as e:
         logger.error(f"Error importing from CSV file {file_path}: {str(e)}")
+        return []
+
+def import_customers(source: str, file_format: Optional[str] = None) -> List[Dict[str, Any]]:
+    """Import customer data from a file"""
+    if file_format == 'json' or source.endswith('.json'):
+        return import_customers_from_json(source)
+    elif file_format == 'csv' or source.endswith('.csv'):
+        return import_customers_from_csv(source)
+    else:
+        logger.error(f"Unsupported file format: {file_format}")
         return []
 
 def generate_customer_data(count=1) -> List[Dict[str, Any]]:
@@ -127,23 +137,23 @@ def generate_customer_data(count=1) -> List[Dict[str, Any]]:
     
     return customers
 
-def create_customer_records(db: Session, customer_data, embedding_service=None):
+def create_customer_records(db: Session, customer_data, embedding_service_instance=None):
     """Create customer records in the database with embeddings"""
     created_count = 0
     
     for data in customer_data:
         try:
             # Generate embeddings if embedding service is provided
-            if embedding_service:
+            if embedding_service_instance:
                 # Company name embedding
-                company_name_embedding = embedding_service.get_embedding(data["company_name"])
+                company_name_embedding = embedding_service_instance.generate_text_embedding(data["company_name"])
                 
                 # Full profile embedding - combine all text fields
                 profile_text = (
                     f"{data['company_name']} {data.get('description', '')} "
                     f"{data['industry']} {data.get('city', '')} {data.get('country', '')}"
                 )
-                full_profile_embedding = embedding_service.get_embedding(profile_text)
+                full_profile_embedding = embedding_service_instance.generate_text_embedding(profile_text)
             else:
                 # Use random vectors if no embedding service
                 company_name_embedding = generate_random_vector()
@@ -180,10 +190,10 @@ def main(count=500, use_real_embeddings=False, source=None, file_format=None):
     create_tables()
     
     # Initialize embedding service if needed
-    embedding_service = None
+    embedding_service_instance = None
     if use_real_embeddings:
         try:
-            embedding_service = get_embedding_service()
+            embedding_service_instance = embedding_service
             logger.info("Using real embeddings from OpenAI")
         except Exception as e:
             logger.warning(f"Could not initialize embedding service: {str(e)}. Using random embeddings.")
@@ -202,7 +212,7 @@ def main(count=500, use_real_embeddings=False, source=None, file_format=None):
     # Create customer records in the database
     db = SessionLocal()
     try:
-        created_count = create_customer_records(db, customer_data, embedding_service)
+        created_count = create_customer_records(db, customer_data, embedding_service_instance)
         db.commit()
         logger.info(f"Successfully created {created_count} customer records")
         return created_count

@@ -8,7 +8,7 @@ A FastAPI-based customer matching application using PostgreSQL with pgvector for
 az-vectordb/
 ├── app/                          # Main application package
 │   ├── __init__.py
-│   ├── main_new.py              # FastAPI application entry point
+│   ├── main.py                  # FastAPI application entry point
 │   ├── api/                     # API layer
 │   │   ├── __init__.py
 │   │   ├── v1/                  # API version 1
@@ -134,15 +134,15 @@ psql -h your-host -U your-user -d vectordb -f sql/02-functions.sql
 ### Development Mode
 ```bash
 # Using the new organized structure
-python -m app.main_new
+python -m app.main
 
 # Or with uvicorn directly
-uvicorn app.main_new:app --reload --host 0.0.0.0 --port 8000
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 ### Production Mode
 ```bash
-uvicorn app.main_new:app --host 0.0.0.0 --port 8000 --workers 4
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
 ```
 
 ## 🧪 Testing

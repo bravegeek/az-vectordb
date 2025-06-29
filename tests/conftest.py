@@ -9,7 +9,7 @@ from sqlalchemy.pool import StaticPool
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql import func
 
-from app.main_new import app
+from app.main import app
 from app.core.database import get_db
 
 # Check if we should use SQLite for testing
