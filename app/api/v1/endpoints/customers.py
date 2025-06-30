@@ -104,10 +104,10 @@ async def search_similar_customers(
         query = text("""
             SELECT 
                 customer_id, company_name, contact_name, email, city, country,
-                1 - (full_profile_embedding <=> :query_embedding) as similarity_score
+                1 - (full_profile_embedding <=> CAST(:query_embedding AS vector(1536))) as similarity_score
             FROM customer_data.customers 
-            WHERE 1 - (full_profile_embedding <=> :query_embedding) > :threshold
-            ORDER BY full_profile_embedding <=> :query_embedding
+            WHERE 1 - (full_profile_embedding <=> CAST(:query_embedding AS vector(1536))) > :threshold
+            ORDER BY full_profile_embedding <=> CAST(:query_embedding AS vector(1536))
             LIMIT :max_results
         """)
         

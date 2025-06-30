@@ -2,6 +2,7 @@
 
 import logging
 import time
+from datetime import datetime
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -37,8 +38,8 @@ async def process_customer_matching(request_id: int, db: Session = Depends(get_d
         matches = matching_service.find_matches(incoming_customer, db)
         
         # Update processing status
-        incoming_customer.processing_status = "completed"
-        incoming_customer.processed_date = time.time()
+        incoming_customer.processing_status = "completed"  # type: ignore
+        incoming_customer.processed_date = datetime.fromtimestamp(time.time())  # type: ignore
         db.commit()
         
         processing_time = (time.time() - start_time) * 1000  # Convert to milliseconds
@@ -79,7 +80,7 @@ async def process_customer_matching_hybrid(request_id: int, db: Session = Depend
         
         # Update processing status
         incoming_customer.processing_status = "completed"
-        incoming_customer.processed_date = time.time()
+        incoming_customer.processed_date = datetime.fromtimestamp(time.time())
         db.commit()
         
         processing_time = (time.time() - start_time) * 1000
@@ -120,7 +121,7 @@ async def process_customer_matching_exact(request_id: int, db: Session = Depends
         
         # Update processing status
         incoming_customer.processing_status = "completed"
-        incoming_customer.processed_date = time.time()
+        incoming_customer.processed_date = datetime.fromtimestamp(time.time())
         db.commit()
         
         processing_time = (time.time() - start_time) * 1000

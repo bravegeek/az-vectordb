@@ -132,10 +132,10 @@ class MatchingService:
         query = text("""
             SELECT 
                 customer_id, company_name, contact_name, email,
-                1 - (full_profile_embedding <=> :query_embedding) as similarity_score
+                1 - (full_profile_embedding <=> CAST(:query_embedding AS vector(1536))) as similarity_score
             FROM customer_data.customers 
-            WHERE 1 - (full_profile_embedding <=> :query_embedding) > :threshold
-            ORDER BY full_profile_embedding <=> :query_embedding
+            WHERE 1 - (full_profile_embedding <=> CAST(:query_embedding AS vector(1536))) > :threshold
+            ORDER BY full_profile_embedding <=> CAST(:query_embedding AS vector(1536))
             LIMIT :max_results
         """)
         
@@ -193,10 +193,10 @@ class MatchingService:
                 
                 matches.append(MatchResultSchema(
                     match_id=0,
-                    matched_customer_id=customer.customer_id,
-                    matched_company_name=customer.company_name,
-                    matched_contact_name=customer.contact_name,
-                    matched_email=customer.email,
+                    matched_customer_id=getattr(customer, 'customer_id'),
+                    matched_company_name=getattr(customer, 'company_name'),
+                    matched_contact_name=getattr(customer, 'contact_name'),
+                    matched_email=getattr(customer, 'email'),
                     similarity_score=company_similarity,
                     match_type=match_type,
                     confidence_level=company_similarity,
