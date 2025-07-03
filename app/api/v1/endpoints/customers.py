@@ -2,6 +2,7 @@
 
 import logging
 from typing import List
+import numpy as np
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -98,6 +99,10 @@ async def search_similar_customers(
     try:
         # Generate embedding for search query
         query_embedding = embedding_service.generate_text_embedding(search_request.query_text)
+        
+        # Convert numpy array to list if needed
+        if isinstance(query_embedding, np.ndarray):
+            query_embedding = query_embedding.tolist()
         
         # Search for similar customers using vector similarity
         from sqlalchemy import text

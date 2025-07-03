@@ -3,6 +3,7 @@ import logging
 import time
 from datetime import datetime
 from typing import List, Dict, Any, Optional
+import numpy as np
 from sqlalchemy.orm import Session
 from sqlalchemy import text, desc, and_, or_
 from difflib import SequenceMatcher
@@ -128,6 +129,11 @@ class MatchingService:
         if incoming_customer.full_profile_embedding is None:
             return matches
         
+        # Convert numpy array to list if needed
+        query_embedding = incoming_customer.full_profile_embedding
+        if isinstance(query_embedding, np.ndarray):
+            query_embedding = query_embedding.tolist()
+        
         # Query for vector similarity matches
         query = text("""
             SELECT 
@@ -142,7 +148,7 @@ class MatchingService:
         results = db.execute(
             query,
             {
-                "query_embedding": incoming_customer.full_profile_embedding,
+                "query_embedding": query_embedding,
                 "threshold": settings.vector_similarity_threshold,
                 "max_results": settings.vector_max_results
             }

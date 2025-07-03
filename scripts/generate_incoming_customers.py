@@ -13,6 +13,7 @@ import sys
 import logging
 import random
 import string
+import json
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 from decimal import Decimal
@@ -369,8 +370,6 @@ class IncomingCustomerGenerator:
     def save_to_json(self, incoming_customers: List[Dict[str, Any]], output_path: str) -> bool:
         """Save incoming customers to JSON file for review"""
         try:
-            import json
-            
             with open(output_path, 'w', encoding='utf-8') as f:
                 json.dump(incoming_customers, f, indent=2, default=str)
             

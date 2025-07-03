@@ -2,6 +2,7 @@
 import logging
 import time
 from typing import List, Tuple, Optional
+import numpy as np
 import openai
 from openai import AzureOpenAI
 
@@ -57,7 +58,13 @@ class EmbeddingService:
                 model=settings.azure_openai_deployment_name
             )
             
-            return response.data[0].embedding
+            embedding = response.data[0].embedding
+            
+            # Convert numpy array to list if needed
+            if isinstance(embedding, np.ndarray):
+                embedding = embedding.tolist()
+            
+            return embedding
             
         except Exception as e:
             logger.error(f"Error generating text embedding: {e}")
@@ -151,7 +158,13 @@ class EmbeddingService:
                     model=settings.azure_openai_deployment_name
                 )
                 
-                batch_embeddings = [data.embedding for data in response.data]
+                batch_embeddings = []
+                for data in response.data:
+                    embedding = data.embedding
+                    # Convert numpy array to list if needed
+                    if isinstance(embedding, np.ndarray):
+                        embedding = embedding.tolist()
+                    batch_embeddings.append(embedding)
                 embeddings.extend(batch_embeddings)
                 
                 # Add small delay to avoid rate limiting
