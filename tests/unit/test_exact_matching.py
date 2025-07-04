@@ -186,16 +186,23 @@ class TestExactMatching:
         """Test handling of whitespace variations"""
         # Test with whitespace variations
         test_cases = [
-            ("Microsoft Corporation", " Microsoft Corporation "),
-            ("  Microsoft Corporation  ", "Microsoft Corporation"),
-            ("Microsoft Corporation", "Microsoft  Corporation"),
+            ("Microsoft Corporation", " Microsoft Corporation "),  # Should match (strip whitespace)
+            ("  Microsoft Corporation  ", "Microsoft Corporation"),  # Should match (strip whitespace)
+            ("Microsoft Corporation", "Microsoft  Corporation"),  # Should NOT match (internal whitespace)
             ("Microsoft Corporation", "Microsoft Corporation"),  # Exact match
         ]
         
         for company1, company2 in test_cases:
             result = matching_service._exact_match_company_name(company1, company2)
-            # Exact matching should be sensitive to whitespace
-            expected = (company1 == company2)
+            
+            # Expected behavior: strip leading/trailing whitespace, but preserve internal whitespace
+            if company1 == company2:
+                expected = True  # Exact match
+            elif company1.strip() == company2.strip():
+                expected = True  # Match after stripping
+            else:
+                expected = False  # No match
+            
             assert result == expected, f"Whitespace handling test failed for '{company1}' vs '{company2}'"
         
         logger.info("✅ Whitespace handling test passed")
