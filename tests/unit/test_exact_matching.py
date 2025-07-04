@@ -16,7 +16,7 @@ import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
 
-from app.services.matching_service import MatchingService
+from app.services.matching.exact_matcher import ExactMatcher
 from app.models.database import Customer, IncomingCustomer
 from app.core.database import get_db
 
@@ -29,9 +29,9 @@ class TestExactMatching:
     """Test suite for exact matching functionality"""
     
     @pytest.fixture
-    def matching_service(self):
-        """Create a matching service instance for testing"""
-        return MatchingService()
+    def exact_matcher(self):
+        """Create an exact matcher instance for testing"""
+        return ExactMatcher()
     
     @pytest.fixture
     def sample_customer(self) -> Dict[str, Any]:
@@ -75,77 +75,63 @@ class TestExactMatching:
             "description": "Technology company"
         }
 
-    def test_exact_company_name_match(self, matching_service, sample_customer, sample_incoming_customer):
+    def test_exact_company_name_match(self, exact_matcher, sample_customer, sample_incoming_customer):
         """Test exact company name matching"""
         # Create customer and incoming customer with exact company name match
         customer = Customer(**sample_customer)
         incoming_customer = IncomingCustomer(**sample_incoming_customer)
         
-        # Test exact match
-        result = matching_service._exact_match_company_name(
-            customer.company_name, 
-            incoming_customer.company_name
-        )
+        # Test exact match using the new matcher's criteria building
+        criteria = exact_matcher._build_exact_criteria(incoming_customer)
+        result = 'company_name' in criteria and criteria['company_name'] == customer.company_name.lower().strip()
         
         assert result is True
         logger.info("✅ Exact company name match test passed")
 
-    def test_exact_email_match(self, matching_service, sample_customer, sample_incoming_customer):
+    def test_exact_email_match(self, exact_matcher, sample_customer, sample_incoming_customer):
         """Test exact email matching"""
         # Create customer and incoming customer with exact email match
         customer = Customer(**sample_customer)
         incoming_customer = IncomingCustomer(**sample_incoming_customer)
         
-        # Test exact match
-        result = matching_service._exact_match_email(
-            customer.email, 
-            incoming_customer.email
-        )
+        # Test exact match using the new matcher's criteria building
+        criteria = exact_matcher._build_exact_criteria(incoming_customer)
+        result = 'email' in criteria and criteria['email'] == customer.email.lower().strip()
         
         assert result is True
         logger.info("✅ Exact email match test passed")
 
-    def test_exact_phone_match(self, matching_service, sample_customer, sample_incoming_customer):
+    def test_exact_phone_match(self, exact_matcher, sample_customer, sample_incoming_customer):
         """Test exact phone matching"""
         # Create customer and incoming customer with exact phone match
         customer = Customer(**sample_customer)
         incoming_customer = IncomingCustomer(**sample_incoming_customer)
         
-        # Test exact match
-        result = matching_service._exact_match_phone(
-            customer.phone, 
-            incoming_customer.phone
-        )
+        # Test exact match using the new matcher's criteria building
+        criteria = exact_matcher._build_exact_criteria(incoming_customer)
+        result = 'phone' in criteria and criteria['phone'] == customer.phone.strip()
         
         assert result is True
         logger.info("✅ Exact phone match test passed")
 
-    def test_multiple_field_match(self, matching_service, sample_customer, sample_incoming_customer):
+    def test_multiple_field_match(self, exact_matcher, sample_customer, sample_incoming_customer):
         """Test when multiple fields match exactly"""
         # Create customer and incoming customer with multiple exact matches
         customer = Customer(**sample_customer)
         incoming_customer = IncomingCustomer(**sample_incoming_customer)
         
-        # Test multiple field matches
-        company_match = matching_service._exact_match_company_name(
-            customer.company_name, 
-            incoming_customer.company_name
-        )
-        email_match = matching_service._exact_match_email(
-            customer.email, 
-            incoming_customer.email
-        )
-        phone_match = matching_service._exact_match_phone(
-            customer.phone, 
-            incoming_customer.phone
-        )
+        # Test multiple field matches using the new matcher's criteria building
+        criteria = exact_matcher._build_exact_criteria(incoming_customer)
+        company_match = 'company_name' in criteria and criteria['company_name'] == customer.company_name.lower().strip()
+        email_match = 'email' in criteria and criteria['email'] == customer.email.lower().strip()
+        phone_match = 'phone' in criteria and criteria['phone'] == customer.phone.strip()
         
         assert company_match is True
         assert email_match is True
         assert phone_match is True
         logger.info("✅ Multiple field match test passed")
 
-    def test_case_sensitivity(self, matching_service, sample_customer):
+    def test_case_sensitivity(self, exact_matcher, sample_customer):
         """Test case sensitivity handling"""
         # Test with different case variations
         test_cases = [
@@ -156,14 +142,23 @@ class TestExactMatching:
         ]
         
         for company1, company2 in test_cases:
-            result = matching_service._exact_match_company_name(company1, company2)
-            # Exact matching should be case-sensitive
-            expected = (company1 == company2)
+            # Create incoming customer with company2
+            incoming_customer = IncomingCustomer(company_name=company2, request_id=1)
+            criteria = exact_matcher._build_exact_criteria(incoming_customer)
+            
+            # Check if company_name is in criteria and matches the expected case-insensitive behavior
+            if 'company_name' in criteria:
+                result = criteria['company_name'] == company1.lower().strip()
+            else:
+                result = False
+                
+            # Expected behavior: should be case-insensitive (converted to lowercase)
+            expected = (company1.lower().strip() == company2.lower().strip())
             assert result == expected, f"Case sensitivity test failed for '{company1}' vs '{company2}'"
         
         logger.info("✅ Case sensitivity test passed")
 
-    def test_null_value_handling(self, matching_service, sample_customer):
+    def test_null_value_handling(self, exact_matcher, sample_customer):
         """Test handling of null/empty values"""
         # Test with null values
         test_cases = [
@@ -176,13 +171,16 @@ class TestExactMatching:
         ]
         
         for company1, company2 in test_cases:
-            result = matching_service._exact_match_company_name(company1, company2)
+            # Create incoming customer with company2
+            incoming_customer = IncomingCustomer(company_name=company2, request_id=1)
+            criteria = exact_matcher._build_exact_criteria(incoming_customer)
+            
             # Should handle null/empty values gracefully
-            assert isinstance(result, bool), f"Null handling test failed for '{company1}' vs '{company2}'"
+            assert isinstance(criteria, dict), f"Null handling test failed for '{company1}' vs '{company2}'"
         
         logger.info("✅ Null value handling test passed")
 
-    def test_whitespace_handling(self, matching_service, sample_customer):
+    def test_whitespace_handling(self, exact_matcher, sample_customer):
         """Test handling of whitespace variations"""
         # Test with whitespace variations
         test_cases = [
@@ -193,7 +191,9 @@ class TestExactMatching:
         ]
         
         for company1, company2 in test_cases:
-            result = matching_service._exact_match_company_name(company1, company2)
+            # Create incoming customer with company2
+            incoming_customer = IncomingCustomer(company_name=company2, request_id=1)
+            criteria = exact_matcher._build_exact_criteria(incoming_customer)
             
             # Expected behavior: strip leading/trailing whitespace, but preserve internal whitespace
             if company1 == company2:
@@ -203,27 +203,31 @@ class TestExactMatching:
             else:
                 expected = False  # No match
             
+            # Check if criteria contains the expected processed company name
+            if 'company_name' in criteria:
+                result = criteria['company_name'] == company1.lower().strip()
+            else:
+                result = False
+                
             assert result == expected, f"Whitespace handling test failed for '{company1}' vs '{company2}'"
         
         logger.info("✅ Whitespace handling test passed")
 
-    def test_exact_match_confidence_scoring(self, matching_service, sample_customer, sample_incoming_customer):
+    def test_exact_match_confidence_scoring(self, exact_matcher, sample_customer, sample_incoming_customer):
         """Test confidence scoring for exact matches"""
         # Create customer and incoming customer with exact matches
         customer = Customer(**sample_customer)
         incoming_customer = IncomingCustomer(**sample_incoming_customer)
         
-        # Test confidence scoring
-        confidence = matching_service._calculate_exact_match_confidence(
-            customer, 
-            incoming_customer
-        )
+        # Test confidence scoring using the new matcher's score calculation
+        criteria = exact_matcher._build_exact_criteria(incoming_customer)
+        score = exact_matcher._calculate_exact_match_score(incoming_customer, customer, criteria)
         
         # Exact matches should have high confidence (0.8-1.0)
-        assert 0.8 <= confidence <= 1.0, f"Confidence score {confidence} not in expected range"
-        logger.info(f"✅ Exact match confidence test passed: {confidence}")
+        assert 0.8 <= score <= 1.0, f"Confidence score {score} not in expected range"
+        logger.info(f"✅ Exact match confidence test passed: {score}")
 
-    def test_no_exact_match(self, matching_service, sample_customer):
+    def test_no_exact_match(self, exact_matcher, sample_customer):
         """Test when no exact match is found"""
         # Test with different company names
         test_cases = [
@@ -233,13 +237,22 @@ class TestExactMatching:
         ]
         
         for company1, company2 in test_cases:
-            result = matching_service._exact_match_company_name(company1, company2)
+            # Create incoming customer with company2
+            incoming_customer = IncomingCustomer(company_name=company2, request_id=1)
+            criteria = exact_matcher._build_exact_criteria(incoming_customer)
+            
+            # Check if criteria contains company_name and it doesn't match
+            if 'company_name' in criteria:
+                result = criteria['company_name'] == company1.lower().strip()
+            else:
+                result = False
+                
             assert result is False, f"No match test failed for '{company1}' vs '{company2}'"
         
         logger.info("✅ No exact match test passed")
 
     @pytest.mark.integration
-    def test_exact_match_with_database(self, matching_service):
+    def test_exact_match_with_database(self, exact_matcher):
         """Integration test with actual database"""
         # This test requires a database connection
         # It will test exact matching with real data from the database
@@ -254,11 +267,12 @@ class TestExactMatching:
                     customer = customers[0]
                     incoming_customer = incoming_customers[0]
                     
-                    # Test exact match
-                    result = matching_service._exact_match_company_name(
-                        customer.company_name, 
-                        incoming_customer.company_name
-                    )
+                    # Test exact match using the new matcher
+                    criteria = exact_matcher._build_exact_criteria(incoming_customer)
+                    if 'company_name' in criteria:
+                        result = criteria['company_name'] == customer.company_name.lower().strip()
+                    else:
+                        result = False
                     
                     # Should return a boolean
                     assert isinstance(result, bool)

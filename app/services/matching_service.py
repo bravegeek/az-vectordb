@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.models.database import IncomingCustomer
 from app.models.schemas import MatchResult as MatchResultSchema
-from app.services.matching import MatchingService
+from app.services.matching.matching_service import MatchingService as NewMatchingService
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +19,7 @@ class MatchingService:
     def __init__(self):
         """Initialize the matching service"""
         logger.warning("Using deprecated MatchingService. Please use app.services.matching.MatchingService instead.")
-        self._new_service = MatchingService()
+        self._new_service = NewMatchingService()
     
     def find_matches(self, incoming_customer: IncomingCustomer, db: Session) -> List[MatchResultSchema]:
         """Find matches using the default hybrid approach"""
