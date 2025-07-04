@@ -214,6 +214,54 @@ class MatchingService:
         matches.sort(key=lambda x: x.similarity_score, reverse=True)
         return matches[:settings.fuzzy_max_results]
     
+    def _exact_match_company_name(self, customer_name: str, incoming_name: str) -> bool:
+        """Check if company names match exactly"""
+        if not customer_name or not incoming_name:
+            return False
+        return customer_name.strip() == incoming_name.strip()
+    
+    def _exact_match_email(self, customer_email: str, incoming_email: str) -> bool:
+        """Check if emails match exactly"""
+        if not customer_email or not incoming_email:
+            return False
+        return customer_email.strip().lower() == incoming_email.strip().lower()
+    
+    def _exact_match_phone(self, customer_phone: str, incoming_phone: str) -> bool:
+        """Check if phone numbers match exactly"""
+        if not customer_phone or not incoming_phone:
+            return False
+        return customer_phone.strip() == incoming_phone.strip()
+    
+    def _calculate_exact_match_confidence(self, customer: Customer, incoming_customer: IncomingCustomer) -> float:
+        """Calculate confidence score for exact matches"""
+        matches = 0
+        total_fields = 0
+        
+        # Check company name
+        if customer.company_name and incoming_customer.company_name:
+            total_fields += 1
+            if self._exact_match_company_name(customer.company_name, incoming_customer.company_name):
+                matches += 1
+        
+        # Check email
+        if customer.email and incoming_customer.email:
+            total_fields += 1
+            if self._exact_match_email(customer.email, incoming_customer.email):
+                matches += 1
+        
+        # Check phone
+        if customer.phone and incoming_customer.phone:
+            total_fields += 1
+            if self._exact_match_phone(customer.phone, incoming_customer.phone):
+                matches += 1
+        
+        if total_fields == 0:
+            return 0.0
+        
+        # Calculate confidence (0.8-1.0 for exact matches)
+        base_confidence = matches / total_fields
+        return 0.8 + (base_confidence * 0.2)  # Scale to 0.8-1.0 range
+    
     def _calculate_exact_match_score(self, incoming: IncomingCustomer, customer: Customer, criteria: Dict[str, str]) -> float:
         """Calculate exact match score based on matched fields"""
         total_score = 0.0
