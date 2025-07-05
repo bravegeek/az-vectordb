@@ -124,4 +124,42 @@ class HealthCheck(BaseModel):
     timestamp: datetime
     version: str
     database_connected: bool
-    openai_connected: bool 
+    openai_connected: bool
+
+
+class TestResultBase(BaseModel):
+    """Base test result model"""
+    test_name: str
+    test_type: str
+    test_configuration: Optional[dict] = None
+    test_data_summary: Optional[dict] = None
+    execution_metrics: Optional[dict] = None
+    results_summary: Optional[dict] = None
+    analysis_results: Optional[dict] = None
+    recommendations: Optional[dict] = None
+    status: str = "completed"
+    error_message: Optional[str] = None
+    created_by: Optional[str] = None
+    notes: Optional[str] = None
+
+
+class TestResultCreate(TestResultBase):
+    """Test result creation model"""
+    pass
+
+
+class TestResultResponse(TestResultBase):
+    """Test result response model"""
+    test_id: int
+    created_date: datetime
+    completed_date: Optional[datetime] = None
+    
+    model_config = ConfigDict(from_attributes=True)
+
+
+class TestResultList(BaseModel):
+    """Test result list response model"""
+    test_results: List[TestResultResponse]
+    total_count: int
+    page: int
+    page_size: int 

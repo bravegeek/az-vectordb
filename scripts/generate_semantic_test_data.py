@@ -366,8 +366,8 @@ class SemanticTestDataGenerator:
         
         return test_data
 
-    def save_to_database(self, test_data: Dict[str, List[Dict[str, Any]]]) -> Dict[str, List[IncomingCustomer]]:
-        """Save semantic test data to database with embeddings"""
+    def save_to_database(self, test_data: Dict[str, List[Dict[str, Any]]]) -> Dict[str, List[dict]]:
+        """Save semantic test data to database with embeddings and return plain dicts"""
         logger.info("Saving semantic test data to database")
         
         saved_data = {}
@@ -403,11 +403,16 @@ class SemanticTestDataGenerator:
                     
                     db.commit()
                     
-                    # Refresh all records to get IDs
+                    # Refresh all records to get IDs and build plain dicts
+                    customer_dicts = []
                     for customer in saved_customers:
                         db.refresh(customer)
+                        customer_dicts.append({
+                            "request_id": customer.request_id,
+                            "company_name": customer.company_name
+                        })
                     
-                    saved_data[intensity] = saved_customers
+                    saved_data[intensity] = customer_dicts
                     logger.info(f"Successfully saved {len(saved_customers)} {intensity} intensity customers")
                 
                 return saved_data
@@ -429,7 +434,7 @@ class SemanticTestDataGenerator:
             logger.error(f"Error saving to JSON: {e}")
             return False
 
-    def print_summary(self, test_data: Dict[str, List[Dict[str, Any]]], saved_data: Dict[str, List[IncomingCustomer]]):
+    def print_summary(self, test_data: Dict[str, List[Dict[str, Any]]], saved_data: Dict[str, List[dict]]):
         """Print summary of generated test data"""
         print("\n" + "="*60)
         print("SEMANTIC SIMILARITY TEST DATA GENERATION SUMMARY")
@@ -441,7 +446,7 @@ class SemanticTestDataGenerator:
             
             print(f"\n📊 {intensity.upper()} INTENSITY ({len(customers)} customers):")
             print(f"   💾 Saved to database: {len(saved_customers)} records")
-            print(f"   🆔 Request IDs: {[c.request_id for c in saved_customers[:5]]}{'...' if len(saved_customers) > 5 else ''}")
+            print(f"   🆔 Request IDs: {[c['request_id'] for c in saved_customers[:5]]}{'...' if len(saved_customers) > 5 else ''}")
             
             # Show sample variations
             print(f"   📝 Sample variations:")

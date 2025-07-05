@@ -95,3 +95,25 @@ class MatchingResult(Base):
     # Relationships
     incoming_customer = relationship("IncomingCustomer", foreign_keys=[incoming_customer_id], back_populates="matches")
     matched_customer = relationship("Customer", foreign_keys=[matched_customer_id], back_populates="matches")
+
+
+class TestResult(Base):
+    """Test execution results table model"""
+    __tablename__ = "test_results"
+    __table_args__ = {"schema": "customer_data"}
+    
+    test_id = Column(Integer, primary_key=True, index=True)
+    test_name = Column(String(255), nullable=False, index=True)
+    test_type = Column(String(100), nullable=False)  # 'semantic_similarity', 'performance', 'integration', etc.
+    test_configuration = Column(JSON)  # Store test parameters and settings
+    test_data_summary = Column(JSON)  # Summary of test data used
+    execution_metrics = Column(JSON)  # Performance metrics, timing, etc.
+    results_summary = Column(JSON)  # Aggregate test results
+    analysis_results = Column(JSON)  # Detailed analysis and insights
+    recommendations = Column(JSON)  # Recommendations from analysis
+    status = Column(String(50), default="completed")  # 'running', 'completed', 'failed'
+    error_message = Column(Text)  # Error details if test failed
+    created_date = Column(DateTime, default=func.now())
+    completed_date = Column(DateTime)
+    created_by = Column(String(100))  # User or system that ran the test
+    notes = Column(Text)  # Additional notes about the test run

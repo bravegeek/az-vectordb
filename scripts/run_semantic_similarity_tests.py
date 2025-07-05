@@ -26,8 +26,8 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from app.core.config import settings
 from app.models.database import Customer, IncomingCustomer
-from app.services.matching.vector_matcher import VectorMatcher
-from app.services.matching.matching_service import MatchingService
+from app.services.matching import VectorMatcher, MatchingService
+from app.services.test_result_processor import TestResultProcessor
 from scripts.generate_semantic_test_data import SemanticTestDataGenerator
 
 # Configure logging
@@ -47,6 +47,7 @@ class SemanticSimilarityTester:
         self.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=self.engine)
         self.vector_matcher = VectorMatcher()
         self.matching_service = MatchingService()
+        self.test_result_processor = TestResultProcessor()
         
         # Test results storage
         self.test_results = {
@@ -55,7 +56,7 @@ class SemanticSimilarityTester:
             "high": {"total": 0, "matches": 0, "high_confidence": 0, "avg_score": 0.0}
         }
 
-    def generate_test_data(self, count_per_intensity: int = 20) -> Dict[str, List[IncomingCustomer]]:
+    def generate_test_data(self, count_per_intensity: int = 20) -> Dict[str, List[dict]]:
         """Generate semantic test data"""
         logger.info("Generating semantic test data...")
         
@@ -66,26 +67,43 @@ class SemanticSimilarityTester:
         logger.info(f"Generated test data: {sum(len(customers) for customers in saved_data.values())} customers")
         return saved_data
 
-    def run_vector_matching_test(self, incoming_customer: IncomingCustomer) -> Dict[str, Any]:
+    def run_vector_matching_test(self, customer_data: Dict[str, Any]) -> Dict[str, Any]:
         """Run vector matching test for a single incoming customer"""
         try:
             with self.SessionLocal() as db:
+                # Re-query the customer in this session to avoid session binding issues
+                customer_id = customer_data["request_id"]
+                customer = db.query(IncomingCustomer).filter(IncomingCustomer.request_id == customer_id).first()
+                
+                if not customer:
+                    logger.warning(f"Customer with request_id {customer_id} not found in database")
+                    return {
+                        "request_id": customer_id,
+                        "company_name": customer_data["company_name"],
+                        "error": "Customer not found in database",
+                        "matches_found": 0,
+                        "response_time": 0.0,
+                        "best_match_score": 0.0,
+                        "best_match_type": "error",
+                        "processing_status": "error",
+                        "processed_date": None
+                    }
+                
                 # Run vector matching
                 start_time = time.time()
-                matches = self.vector_matcher.find_matches(incoming_customer, db)
+                matches = self.vector_matcher.find_matches(customer, db)
                 end_time = time.time()
                 
-                # Get processing status after matching
-                db.refresh(incoming_customer)
-                processing_status = getattr(incoming_customer, 'processing_status', 'unknown')
-                processed_date = getattr(incoming_customer, 'processed_date', None)
+                # Get processing status - no need to refresh since we're not updating the customer
+                processing_status = getattr(customer, 'processing_status', 'unknown')
+                processed_date = getattr(customer, 'processed_date', None)
                 
                 # Analyze results
                 result = {
-                    "request_id": getattr(incoming_customer, 'request_id'),
-                    "company_name": incoming_customer.company_name,
-                    "base_customer_id": getattr(incoming_customer, 'base_customer_id', None),
-                    "variation_intensity": getattr(incoming_customer, 'variation_intensity', 'unknown'),
+                    "request_id": customer.request_id,
+                    "company_name": customer.company_name,
+                    "base_customer_id": getattr(customer, 'base_customer_id', None),
+                    "variation_intensity": getattr(customer, 'variation_intensity', 'unknown'),
                     "matches_found": len(matches),
                     "response_time": end_time - start_time,
                     "best_match_score": 0.0,
@@ -118,10 +136,10 @@ class SemanticSimilarityTester:
                 return result
                 
         except Exception as e:
-            logger.error(f"Error running vector matching test for request {getattr(incoming_customer, 'request_id')}: {e}")
+            logger.error(f"Error running vector matching test for request {customer_data.get('request_id')}: {e}")
             return {
-                "request_id": getattr(incoming_customer, 'request_id'),
-                "company_name": incoming_customer.company_name,
+                "request_id": customer_data.get('request_id'),
+                "company_name": customer_data.get('company_name', 'Unknown'),
                 "error": str(e),
                 "matches_found": 0,
                 "response_time": 0.0,
@@ -131,7 +149,7 @@ class SemanticSimilarityTester:
                 "processed_date": None
             }
 
-    def run_semantic_similarity_tests(self, test_data: Dict[str, List[IncomingCustomer]]) -> Dict[str, Any]:
+    def run_semantic_similarity_tests(self, test_data: Dict[str, List[Dict[str, Any]]]) -> Dict[str, Any]:
         """Run comprehensive semantic similarity tests"""
         logger.info("Running semantic similarity tests...")
         
@@ -302,7 +320,7 @@ class SemanticSimilarityTester:
         return analysis
 
     def save_test_results(self, test_results: Dict[str, Any], analysis: Dict[str, Any], output_path: str):
-        """Save test results and analysis to JSON file"""
+        """Save test results and analysis to JSON file and database"""
         try:
             output_data = {
                 "test_results": test_results,
@@ -316,10 +334,51 @@ class SemanticSimilarityTester:
                 }
             }
             
+            # Save to JSON file (backward compatibility)
             with open(output_path, 'w', encoding='utf-8') as f:
                 json.dump(output_data, f, indent=2, default=str)
             
-            logger.info(f"Test results saved to: {output_path}")
+            logger.info(f"Test results saved to JSON: {output_path}")
+            
+            # Save to database using TestResultProcessor
+            try:
+                with self.SessionLocal() as db:
+                    stored_result = self.test_result_processor.store_semantic_test_result(
+                        test_name=f"Semantic Similarity Test - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+                        test_configuration=output_data["test_configuration"],
+                        test_data_summary={
+                            "total_customers_tested": test_results["overall_summary"]["total_customers_tested"],
+                            "intensity_breakdown": {
+                                intensity: results["total_customers"] 
+                                for intensity, results in test_results["intensity_results"].items()
+                            }
+                        },
+                        execution_metrics={
+                            "average_response_time": test_results["overall_summary"]["average_response_time"],
+                            "total_execution_time": test_results["overall_summary"].get("total_execution_time", 0),
+                            "customers_per_second": test_results["overall_summary"]["total_customers_tested"] / 
+                                                  max(test_results["overall_summary"]["average_response_time"], 0.001)
+                        },
+                        results_summary={
+                            "match_rate": test_results["overall_summary"]["match_rate"],
+                            "high_confidence_matches": test_results["overall_summary"]["high_confidence_matches"],
+                            "average_similarity_score": test_results["overall_summary"]["average_similarity_score"],
+                            "intensity_results": test_results["intensity_results"]
+                        },
+                        analysis_results=analysis,
+                        recommendations=analysis.get("recommendations", []),
+                        db=db
+                    )
+                    
+                    if stored_result:
+                        logger.info(f"Test results stored in database with ID: {stored_result.test_id}")
+                    else:
+                        logger.warning("Failed to store test results in database")
+                        
+            except Exception as db_error:
+                logger.error(f"Error storing test results in database: {db_error}")
+                # Continue execution even if database storage fails
+            
             return True
             
         except Exception as e:

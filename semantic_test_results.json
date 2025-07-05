@@ -1,0 +1,552 @@
+{
+  "test_results": {
+    "test_timestamp": "2025-07-05T13:39:47.727054",
+    "intensity_results": {
+      "low": {
+        "total_customers": 5,
+        "customers_with_matches": 5,
+        "high_confidence_matches": 0,
+        "average_similarity_score": 0.7899873868174976,
+        "average_response_time": 0.1663257122039795,
+        "score_distribution": {
+          "0.9+": 0,
+          "0.8-0.9": 2,
+          "0.7-0.8": 3,
+          "0.6-0.7": 0,
+          "<0.6": 0
+        },
+        "match_type_distribution": {
+          "exact": 0,
+          "high_confidence": 0,
+          "potential": 2,
+          "low_confidence": 3,
+          "no_match": 0
+        }
+      },
+      "medium": {
+        "total_customers": 5,
+        "customers_with_matches": 5,
+        "high_confidence_matches": 0,
+        "average_similarity_score": 0.7781139709902621,
+        "average_response_time": 0.13605856895446777,
+        "score_distribution": {
+          "0.9+": 0,
+          "0.8-0.9": 0,
+          "0.7-0.8": 5,
+          "0.6-0.7": 0,
+          "<0.6": 0
+        },
+        "match_type_distribution": {
+          "exact": 0,
+          "high_confidence": 0,
+          "potential": 0,
+          "low_confidence": 5,
+          "no_match": 0
+        }
+      },
+      "high": {
+        "total_customers": 5,
+        "customers_with_matches": 5,
+        "high_confidence_matches": 0,
+        "average_similarity_score": 0.7868141598170453,
+        "average_response_time": 0.13281235694885254,
+        "score_distribution": {
+          "0.9+": 0,
+          "0.8-0.9": 0,
+          "0.7-0.8": 5,
+          "0.6-0.7": 0,
+          "<0.6": 0
+        },
+        "match_type_distribution": {
+          "exact": 0,
+          "high_confidence": 0,
+          "potential": 0,
+          "low_confidence": 5,
+          "no_match": 0
+        }
+      }
+    },
+    "overall_summary": {
+      "total_customers_tested": 15,
+      "customers_with_matches": 15,
+      "match_rate": 1.0,
+      "high_confidence_matches": 0,
+      "average_similarity_score": 0.7849718392082683,
+      "average_response_time": 0.1450655460357666
+    },
+    "detailed_results": [
+      {
+        "request_id": 196,
+        "company_name": "Owen-Owen",
+        "base_customer_id": null,
+        "variation_intensity": "unknown",
+        "matches_found": 2,
+        "response_time": 0.30675244331359863,
+        "best_match_score": 0.7607832635149463,
+        "best_match_type": "low_confidence",
+        "high_confidence_matches": 0,
+        "match_details": [
+          {
+            "customer_id": 504,
+            "company_name": "TechCorp Solutions Inc.",
+            "similarity_score": 0.7607832635149463,
+            "confidence_level": 0.6086266108119571,
+            "match_type": "low_confidence"
+          },
+          {
+            "customer_id": 505,
+            "company_name": "TechCorp Solutions Inc.",
+            "similarity_score": 0.7607832635149463,
+            "confidence_level": 0.6086266108119571,
+            "match_type": "low_confidence"
+          }
+        ],
+        "processing_status": "pending",
+        "processed_date": null
+      },
+      {
+        "request_id": 197,
+        "company_name": "Taylor, Proctor and Kennedy Incorporated",
+        "base_customer_id": null,
+        "variation_intensity": "unknown",
+        "matches_found": 2,
+        "response_time": 0.13006114959716797,
+        "best_match_score": 0.811923813109172,
+        "best_match_type": "potential",
+        "high_confidence_matches": 0,
+        "match_details": [
+          {
+            "customer_id": 504,
+            "company_name": "TechCorp Solutions Inc.",
+            "similarity_score": 0.811923813109172,
+            "confidence_level": 0.6495390504873377,
+            "match_type": "potential"
+          },
+          {
+            "customer_id": 505,
+            "company_name": "TechCorp Solutions Inc.",
+            "similarity_score": 0.811923813109172,
+            "confidence_level": 0.6495390504873377,
+            "match_type": "potential"
+          }
+        ],
+        "processing_status": "pending",
+        "processed_date": null
+      },
+      {
+        "request_id": 198,
+        "company_name": "Davis Group",
+        "base_customer_id": null,
+        "variation_intensity": "unknown",
+        "matches_found": 2,
+        "response_time": 0.12926411628723145,
+        "best_match_score": 0.7850278849908167,
+        "best_match_type": "low_confidence",
+        "high_confidence_matches": 0,
+        "match_details": [
+          {
+            "customer_id": 504,
+            "company_name": "TechCorp Solutions Inc.",
+            "similarity_score": 0.7850278849908167,
+            "confidence_level": 0.6280223079926534,
+            "match_type": "low_confidence"
+          },
+          {
+            "customer_id": 505,
+            "company_name": "TechCorp Solutions Inc.",
+            "similarity_score": 0.7850278849908167,
+            "confidence_level": 0.6280223079926534,
+            "match_type": "low_confidence"
+          }
+        ],
+        "processing_status": "pending",
+        "processed_date": null
+      },
+      {
+        "request_id": 199,
+        "company_name": "Crosby LLC",
+        "base_customer_id": null,
+        "variation_intensity": "unknown",
+        "matches_found": 2,
+        "response_time": 0.13268733024597168,
+        "best_match_score": 0.8022183893788836,
+        "best_match_type": "potential",
+        "high_confidence_matches": 0,
+        "match_details": [
+          {
+            "customer_id": 504,
+            "company_name": "TechCorp Solutions Inc.",
+            "similarity_score": 0.8022183893788836,
+            "confidence_level": 0.6417747115031069,
+            "match_type": "potential"
+          },
+          {
+            "customer_id": 505,
+            "company_name": "TechCorp Solutions Inc.",
+            "similarity_score": 0.8022183893788836,
+            "confidence_level": 0.6417747115031069,
+            "match_type": "potential"
+          }
+        ],
+        "processing_status": "pending",
+        "processed_date": null
+      },
+      {
+        "request_id": 200,
+        "company_name": "Estrada, Cummings and Lewis",
+        "base_customer_id": null,
+        "variation_intensity": "unknown",
+        "matches_found": 2,
+        "response_time": 0.13286352157592773,
+        "best_match_score": 0.7899835830936695,
+        "best_match_type": "low_confidence",
+        "high_confidence_matches": 0,
+        "match_details": [
+          {
+            "customer_id": 504,
+            "company_name": "TechCorp Solutions Inc.",
+            "similarity_score": 0.7899835830936695,
+            "confidence_level": 0.6319868664749356,
+            "match_type": "low_confidence"
+          },
+          {
+            "customer_id": 505,
+            "company_name": "TechCorp Solutions Inc.",
+            "similarity_score": 0.7899835830936695,
+            "confidence_level": 0.6319868664749356,
+            "match_type": "low_confidence"
+          }
+        ],
+        "processing_status": "pending",
+        "processed_date": null
+      },
+      {
+        "request_id": 201,
+        "company_name": "Owen-Owen Partners",
+        "base_customer_id": null,
+        "variation_intensity": "unknown",
+        "matches_found": 2,
+        "response_time": 0.13248562812805176,
+        "best_match_score": 0.7614294233068238,
+        "best_match_type": "low_confidence",
+        "high_confidence_matches": 0,
+        "match_details": [
+          {
+            "customer_id": 504,
+            "company_name": "TechCorp Solutions Inc.",
+            "similarity_score": 0.7614294233068238,
+            "confidence_level": 0.6091435386454591,
+            "match_type": "low_confidence"
+          },
+          {
+            "customer_id": 505,
+            "company_name": "TechCorp Solutions Inc.",
+            "similarity_score": 0.7614294233068238,
+            "confidence_level": 0.6091435386454591,
+            "match_type": "low_confidence"
+          }
+        ],
+        "processing_status": "pending",
+        "processed_date": null
+      },
+      {
+        "request_id": 202,
+        "company_name": "Owen-Owen Limited Liability Company",
+        "base_customer_id": null,
+        "variation_intensity": "unknown",
+        "matches_found": 2,
+        "response_time": 0.1449894905090332,
+        "best_match_score": 0.7678179740905816,
+        "best_match_type": "low_confidence",
+        "high_confidence_matches": 0,
+        "match_details": [
+          {
+            "customer_id": 504,
+            "company_name": "TechCorp Solutions Inc.",
+            "similarity_score": 0.7678179740905816,
+            "confidence_level": 0.6142543792724653,
+            "match_type": "low_confidence"
+          },
+          {
+            "customer_id": 505,
+            "company_name": "TechCorp Solutions Inc.",
+            "similarity_score": 0.7678179740905816,
+            "confidence_level": 0.6142543792724653,
+            "match_type": "low_confidence"
+          }
+        ],
+        "processing_status": "pending",
+        "processed_date": null
+      },
+      {
+        "request_id": 203,
+        "company_name": "Hunter-Humphrey",
+        "base_customer_id": null,
+        "variation_intensity": "unknown",
+        "matches_found": 2,
+        "response_time": 0.13597416877746582,
+        "best_match_score": 0.7825068028259048,
+        "best_match_type": "low_confidence",
+        "high_confidence_matches": 0,
+        "match_details": [
+          {
+            "customer_id": 504,
+            "company_name": "TechCorp Solutions Inc.",
+            "similarity_score": 0.7825068028259048,
+            "confidence_level": 0.6260054422607239,
+            "match_type": "low_confidence"
+          },
+          {
+            "customer_id": 505,
+            "company_name": "TechCorp Solutions Inc.",
+            "similarity_score": 0.7825068028259048,
+            "confidence_level": 0.6260054422607239,
+            "match_type": "low_confidence"
+          }
+        ],
+        "processing_status": "pending",
+        "processed_date": null
+      },
+      {
+        "request_id": 204,
+        "company_name": "Burke, Foster and Schneider",
+        "base_customer_id": null,
+        "variation_intensity": "unknown",
+        "matches_found": 2,
+        "response_time": 0.13304901123046875,
+        "best_match_score": 0.7894078273640002,
+        "best_match_type": "low_confidence",
+        "high_confidence_matches": 0,
+        "match_details": [
+          {
+            "customer_id": 504,
+            "company_name": "TechCorp Solutions Inc.",
+            "similarity_score": 0.7894078273640002,
+            "confidence_level": 0.6315262618912002,
+            "match_type": "low_confidence"
+          },
+          {
+            "customer_id": 505,
+            "company_name": "TechCorp Solutions Inc.",
+            "similarity_score": 0.7894078273640002,
+            "confidence_level": 0.6315262618912002,
+            "match_type": "low_confidence"
+          }
+        ],
+        "processing_status": "pending",
+        "processed_date": null
+      },
+      {
+        "request_id": 205,
+        "company_name": "Burke, Foster and Schneider",
+        "base_customer_id": null,
+        "variation_intensity": "unknown",
+        "matches_found": 2,
+        "response_time": 0.13379454612731934,
+        "best_match_score": 0.7894078273640002,
+        "best_match_type": "low_confidence",
+        "high_confidence_matches": 0,
+        "match_details": [
+          {
+            "customer_id": 504,
+            "company_name": "TechCorp Solutions Inc.",
+            "similarity_score": 0.7894078273640002,
+            "confidence_level": 0.6315262618912002,
+            "match_type": "low_confidence"
+          },
+          {
+            "customer_id": 505,
+            "company_name": "TechCorp Solutions Inc.",
+            "similarity_score": 0.7894078273640002,
+            "confidence_level": 0.6315262618912002,
+            "match_type": "low_confidence"
+          }
+        ],
+        "processing_status": "pending",
+        "processed_date": null
+      },
+      {
+        "request_id": 206,
+        "company_name": "Estrada, Cummings and Lewis",
+        "base_customer_id": null,
+        "variation_intensity": "unknown",
+        "matches_found": 2,
+        "response_time": 0.13359403610229492,
+        "best_match_score": 0.7899835830936695,
+        "best_match_type": "low_confidence",
+        "high_confidence_matches": 0,
+        "match_details": [
+          {
+            "customer_id": 504,
+            "company_name": "TechCorp Solutions Inc.",
+            "similarity_score": 0.7899835830936695,
+            "confidence_level": 0.6319868664749356,
+            "match_type": "low_confidence"
+          },
+          {
+            "customer_id": 505,
+            "company_name": "TechCorp Solutions Inc.",
+            "similarity_score": 0.7899835830936695,
+            "confidence_level": 0.6319868664749356,
+            "match_type": "low_confidence"
+          }
+        ],
+        "processing_status": "pending",
+        "processed_date": null
+      },
+      {
+        "request_id": 207,
+        "company_name": "Knight-Shepherd",
+        "base_customer_id": null,
+        "variation_intensity": "unknown",
+        "matches_found": 2,
+        "response_time": 0.13260722160339355,
+        "best_match_score": 0.7767145703093622,
+        "best_match_type": "low_confidence",
+        "high_confidence_matches": 0,
+        "match_details": [
+          {
+            "customer_id": 504,
+            "company_name": "TechCorp Solutions Inc.",
+            "similarity_score": 0.7767145703093622,
+            "confidence_level": 0.6213716562474898,
+            "match_type": "low_confidence"
+          },
+          {
+            "customer_id": 505,
+            "company_name": "TechCorp Solutions Inc.",
+            "similarity_score": 0.7767145703093622,
+            "confidence_level": 0.6213716562474898,
+            "match_type": "low_confidence"
+          }
+        ],
+        "processing_status": "pending",
+        "processed_date": null
+      },
+      {
+        "request_id": 208,
+        "company_name": "Estrada, Cummings and Lewis",
+        "base_customer_id": null,
+        "variation_intensity": "unknown",
+        "matches_found": 2,
+        "response_time": 0.13393068313598633,
+        "best_match_score": 0.7899835830936695,
+        "best_match_type": "low_confidence",
+        "high_confidence_matches": 0,
+        "match_details": [
+          {
+            "customer_id": 504,
+            "company_name": "TechCorp Solutions Inc.",
+            "similarity_score": 0.7899835830936695,
+            "confidence_level": 0.6319868664749356,
+            "match_type": "low_confidence"
+          },
+          {
+            "customer_id": 505,
+            "company_name": "TechCorp Solutions Inc.",
+            "similarity_score": 0.7899835830936695,
+            "confidence_level": 0.6319868664749356,
+            "match_type": "low_confidence"
+          }
+        ],
+        "processing_status": "pending",
+        "processed_date": null
+      },
+      {
+        "request_id": 209,
+        "company_name": "Olson, Martin and Anderson",
+        "base_customer_id": null,
+        "variation_intensity": "unknown",
+        "matches_found": 2,
+        "response_time": 0.13217473030090332,
+        "best_match_score": 0.7825755243725949,
+        "best_match_type": "low_confidence",
+        "high_confidence_matches": 0,
+        "match_details": [
+          {
+            "customer_id": 504,
+            "company_name": "TechCorp Solutions Inc.",
+            "similarity_score": 0.7825755243725949,
+            "confidence_level": 0.626060419498076,
+            "match_type": "low_confidence"
+          },
+          {
+            "customer_id": 505,
+            "company_name": "TechCorp Solutions Inc.",
+            "similarity_score": 0.7825755243725949,
+            "confidence_level": 0.626060419498076,
+            "match_type": "low_confidence"
+          }
+        ],
+        "processing_status": "pending",
+        "processed_date": null
+      },
+      {
+        "request_id": 210,
+        "company_name": "Snow, Thornton and Woodward",
+        "base_customer_id": null,
+        "variation_intensity": "unknown",
+        "matches_found": 2,
+        "response_time": 0.13175511360168457,
+        "best_match_score": 0.7948135382159307,
+        "best_match_type": "low_confidence",
+        "high_confidence_matches": 0,
+        "match_details": [
+          {
+            "customer_id": 504,
+            "company_name": "TechCorp Solutions Inc.",
+            "similarity_score": 0.7948135382159307,
+            "confidence_level": 0.6358508305727446,
+            "match_type": "low_confidence"
+          },
+          {
+            "customer_id": 505,
+            "company_name": "TechCorp Solutions Inc.",
+            "similarity_score": 0.7948135382159307,
+            "confidence_level": 0.6358508305727446,
+            "match_type": "low_confidence"
+          }
+        ],
+        "processing_status": "pending",
+        "processed_date": null
+      }
+    ]
+  },
+  "analysis": {
+    "semantic_variation_effectiveness": {
+      "low": {
+        "match_rate": 1.0,
+        "average_score": 0.7899873868174976,
+        "effectiveness": "medium"
+      },
+      "medium": {
+        "match_rate": 1.0,
+        "average_score": 0.7781139709902621,
+        "effectiveness": "medium"
+      },
+      "high": {
+        "match_rate": 1.0,
+        "average_score": 0.7868141598170453,
+        "effectiveness": "medium"
+      }
+    },
+    "industry_specific_patterns": {},
+    "company_name_patterns": {
+      "suffix_variation": {
+        "count": 1,
+        "avg_score": 0.811923813109172,
+        "scores": [
+          0.811923813109172
+        ]
+      }
+    },
+    "recommendations": []
+  },
+  "test_configuration": {
+    "vector_similarity_threshold": 0.7,
+    "vector_max_results": 5,
+    "high_confidence_threshold": 0.9,
+    "default_similarity_threshold": 0.8,
+    "potential_match_threshold": 0.75
+  }
+}
