@@ -2,8 +2,7 @@
 from datetime import datetime
 from typing import Optional, List
 from sqlalchemy import Column, Integer, String, Text, DECIMAL, DateTime, Boolean, ForeignKey, JSON
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, declarative_base
 from sqlalchemy.sql import func
 from pgvector.sqlalchemy import Vector
 

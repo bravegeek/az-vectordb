@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from typing import Optional, List
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 
 class CustomerBase(BaseModel):
@@ -35,8 +35,7 @@ class CustomerResponse(CustomerBase):
     created_date: datetime
     updated_date: datetime
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class IncomingCustomerCreate(CustomerBase):
@@ -51,8 +50,7 @@ class IncomingCustomerResponse(CustomerBase):
     processing_status: str
     processed_date: Optional[datetime] = None
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class MatchResult(BaseModel):
@@ -68,8 +66,7 @@ class MatchResult(BaseModel):
     match_criteria: dict
     created_date: datetime
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CustomerMatchResponse(BaseModel):
@@ -97,8 +94,7 @@ class SimilaritySearchResult(BaseModel):
     country: Optional[str]
     similarity_score: float
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class HealthCheck(BaseModel):
