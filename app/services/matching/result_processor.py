@@ -1,9 +1,10 @@
 """Result processing and storage for customer matching"""
 import logging
 from typing import List
+from datetime import datetime
 from sqlalchemy.orm import Session
 
-from app.models.database import MatchingResult
+from app.models.database import MatchingResult, IncomingCustomer
 from app.models.schemas import MatchResult as MatchResultSchema
 
 logger = logging.getLogger(__name__)
@@ -31,6 +32,7 @@ class ResultProcessor:
     def store_matching_results(self, request_id: int, matches: List[MatchResultSchema], db: Session) -> bool:
         """Store matching results in database"""
         try:
+            # Store matching results
             for match in matches:
                 db_result = MatchingResult(
                     incoming_customer_id=request_id,
@@ -41,6 +43,15 @@ class ResultProcessor:
                     confidence_level=match.confidence_level
                 )
                 db.add(db_result)
+            
+            # Update incoming customer processing status
+            incoming_customer = db.query(IncomingCustomer).filter(IncomingCustomer.request_id == request_id).first()
+            if incoming_customer:
+                setattr(incoming_customer, 'processing_status', "processed")
+                setattr(incoming_customer, 'processed_date', datetime.now())
+                logger.info(f"Updated processing status for request_id {request_id}: processed")
+            else:
+                logger.warning(f"Incoming customer with request_id {request_id} not found for status update")
             
             db.commit()
             logger.info(f"Stored {len(matches)} matching results for request_id {request_id}")
@@ -59,7 +70,27 @@ class ResultProcessor:
         # Sort by confidence
         sorted_matches = self.sort_matches(unique_matches)
         
-        # Store in database
+        # Store in database (this will also update processing status)
         self.store_matching_results(request_id, sorted_matches, db)
         
-        return sorted_matches 
+        return sorted_matches
+    
+    def update_processing_status(self, request_id: int, status: str, db: Session) -> bool:
+        """Update processing status for incoming customer"""
+        try:
+            incoming_customer = db.query(IncomingCustomer).filter(IncomingCustomer.request_id == request_id).first()
+            if incoming_customer:
+                setattr(incoming_customer, 'processing_status', status)
+                if status == "processed":
+                    setattr(incoming_customer, 'processed_date', datetime.now())
+                logger.info(f"Updated processing status for request_id {request_id}: {status}")
+                db.commit()
+                return True
+            else:
+                logger.warning(f"Incoming customer with request_id {request_id} not found for status update")
+                return False
+                
+        except Exception as e:
+            db.rollback()
+            logger.error(f"Error updating processing status: {e}")
+            return False 

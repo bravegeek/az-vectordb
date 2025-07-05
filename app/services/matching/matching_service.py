@@ -44,22 +44,50 @@ class MatchingService:
         all_matches.extend(fuzzy_matches)
         
         # Process and store results
-        return self.result_processor.process_results(all_matches, incoming_customer.request_id, db)  # type: ignore
+        processed_matches = self.result_processor.process_results(all_matches, incoming_customer.request_id, db)  # type: ignore
+        
+        # If no matches found, still update processing status
+        if not processed_matches:
+            request_id = getattr(incoming_customer, 'request_id')
+            self.result_processor.update_processing_status(request_id, "processed", db)
+        
+        return processed_matches
     
     def find_exact_matches(self, incoming_customer: IncomingCustomer, db: Session) -> List[MatchResultSchema]:
         """Find matches using exact matching only"""
         matches = self.exact_matcher.find_matches(incoming_customer, db)
-        return self.result_processor.process_results(matches, incoming_customer.request_id, db)  # type: ignore
+        processed_matches = self.result_processor.process_results(matches, getattr(incoming_customer, 'request_id'), db)  # type: ignore
+        
+        # If no matches found, still update processing status
+        if not processed_matches:
+            request_id = getattr(incoming_customer, 'request_id')
+            self.result_processor.update_processing_status(request_id, "processed", db)
+        
+        return processed_matches
     
     def find_vector_matches(self, incoming_customer: IncomingCustomer, db: Session) -> List[MatchResultSchema]:
         """Find matches using vector matching only"""
         matches = self.vector_matcher.find_matches(incoming_customer, db)
-        return self.result_processor.process_results(matches, incoming_customer.request_id, db)  # type: ignore
+        processed_matches = self.result_processor.process_results(matches, getattr(incoming_customer, 'request_id'), db)  # type: ignore
+        
+        # If no matches found, still update processing status
+        if not processed_matches:
+            request_id = getattr(incoming_customer, 'request_id')
+            self.result_processor.update_processing_status(request_id, "processed", db)
+        
+        return processed_matches
     
     def find_fuzzy_matches(self, incoming_customer: IncomingCustomer, db: Session) -> List[MatchResultSchema]:
         """Find matches using fuzzy matching only"""
         matches = self.fuzzy_matcher.find_matches(incoming_customer, db)
-        return self.result_processor.process_results(matches, incoming_customer.request_id, db)  # type: ignore
+        processed_matches = self.result_processor.process_results(matches, getattr(incoming_customer, 'request_id'), db)  # type: ignore
+        
+        # If no matches found, still update processing status
+        if not processed_matches:
+            request_id = getattr(incoming_customer, 'request_id')
+            self.result_processor.update_processing_status(request_id, "processed", db)
+        
+        return processed_matches
 
 
 # Global service instance
