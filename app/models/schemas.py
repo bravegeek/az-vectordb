@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from typing import Optional, List
-from pydantic import BaseModel, Field, ConfigDict, EmailStr, validator
+from pydantic import BaseModel, Field, ConfigDict, EmailStr, field_validator
 
 
 class CustomerBase(BaseModel):
@@ -23,19 +23,22 @@ class CustomerBase(BaseModel):
     website: Optional[str] = Field(None, description="Website URL")
     description: Optional[str] = Field(None, description="Company description")
 
-    @validator('company_name')
+    @field_validator('company_name')
+    @classmethod
     def validate_company_name(cls, v):
         if not v or not v.strip():
             raise ValueError('Company name cannot be empty')
         return v.strip()
 
-    @validator('annual_revenue')
+    @field_validator('annual_revenue')
+    @classmethod
     def validate_annual_revenue(cls, v):
         if v is not None and v < 0:
             raise ValueError('Annual revenue cannot be negative')
         return v
 
-    @validator('employee_count')
+    @field_validator('employee_count')
+    @classmethod
     def validate_employee_count(cls, v):
         if v is not None and v < 0:
             raise ValueError('Employee count cannot be negative')
