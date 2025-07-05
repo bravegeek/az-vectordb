@@ -89,7 +89,7 @@ class TestVectorMatching:
         
         # Test that the matcher can handle semantic variations
         # "Microsoft Corporation" vs "Microsoft Corp" should be semantically similar
-        assert customer.company_name != incoming_customer.company_name
+        assert str(customer.company_name) != str(incoming_customer.company_name)
         assert "Microsoft" in customer.company_name
         assert "Microsoft" in incoming_customer.company_name
         

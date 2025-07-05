@@ -131,11 +131,13 @@ class NewMatcher(BaseMatcher):
 
 ## Migration from Old Service
 
-The old `app/services/matching_service.py` has been deprecated but maintains backward compatibility:
+The old `app/services/matching_service.py` file has been **removed**. All code should now import the matching service directly from the modular location:
 
-- All existing code will continue to work
-- Warnings are logged when using the deprecated service
-- Gradually migrate to the new modular service
+```python
+from app.services.matching.matching_service import MatchingService, matching_service
+```
+
+Update any old imports to use the new modular service for full compatibility and access to all features.
 
 ## Configuration
 

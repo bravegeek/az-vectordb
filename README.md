@@ -96,7 +96,7 @@ az-vectordb/
 │   ├── services/                # Business logic services
 │   │   ├── __init__.py
 │   │   ├── embedding_service.py # Azure OpenAI embedding service
-│   │   └── matching_service.py  # Customer matching service
+│   │   └── matching/           # Modular customer matching services
 │   └── utils/                   # Utility functions
 │       ├── __init__.py
 │       └── helpers.py           # Common helper functions
@@ -485,77 +485,5 @@ CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
 | `app/database.py` | `app/core/database.py` | Database connection management |
 | `app/models.py` | `app/models/database.py` + `app/models/schemas.py` | Split into DB models and API schemas |
 | `app/embedding_service.py` | `app/services/embedding_service.py` | Business logic service |
-| `app/matching_service.py` | `app/services/matching_service.py` | Business logic service |
-| `app/import/` | `scripts/` | Utility scripts moved |
-
-#### API Endpoint Changes
-
-| Old Endpoint | New Endpoint | Notes |
-|--------------|--------------|-------|
-| `/health` | `/api/v1/health/` | Added API versioning |
-| `/customers` | `/api/v1/customers/` | Added API versioning |
-| `/customers/incoming` | `/api/v1/customers/incoming` | Added API versioning |
-| `/customers/match/{id}` | `/api/v1/matching/{id}` | Reorganized matching endpoints |
-| `/customers/search` | `/api/v1/customers/search` | Added API versioning |
-| `/matches/{id}` | `/api/v1/matching/results/{id}` | Reorganized matching endpoints |
-
-### Migration Steps
-
-1. **Update Environment**: Install new development dependencies
-2. **Update API Calls**: Add `/api/v1/` prefix to endpoints
-3. **Update Imports**: Use new package structure
-4. **Test Application**: Verify all functionality works
-5. **Update Scripts**: Modify any custom scripts
-
-### Troubleshooting
-
-- **Import Errors**: Update import statements to use new package structure
-- **API 404 Errors**: Update endpoint URLs to include `/api/v1/` prefix
-- **Database Issues**: Verify `.env` file and database credentials
-- **Test Failures**: Update test imports and endpoint URLs
-
-## 📈 Benefits of Current Structure
-
-### 1. **Better Code Organization**
-- Clear separation of concerns
-- Easier to find and modify code
-- Better maintainability
-
-### 2. **Improved Development Experience**
-- Modern development tools
-- Automated code quality checks
-- Better testing infrastructure
-
-### 3. **Enhanced Scalability**
-- Modular architecture
-- API versioning support
-- Service layer abstraction
-
-### 4. **Production Readiness**
-- Comprehensive error handling
-- Better logging
-- Health checks and monitoring
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Run tests and code quality checks
-5. Submit a pull request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 🆘 Support
-
-For issues and questions:
-1. Check the documentation above
-2. Review the API documentation at `/docs`
-3. Check the logs for detailed error messages
-4. Open an issue on GitHub
-
----
-
-**Built with ❤️ using Azure, PostgreSQL, and Python**
+| `app/matching_service.py` | `app/services/matching/matching_service.py` | Business logic service |
+| `

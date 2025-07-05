@@ -27,7 +27,7 @@ from sqlalchemy.orm import sessionmaker
 from app.core.config import settings
 from app.models.database import Customer, IncomingCustomer
 from app.services.matching.vector_matcher import VectorMatcher
-from app.services.matching_service import MatchingService
+from app.services.matching.matching_service import MatchingService
 from scripts.generate_semantic_test_data import SemanticTestDataGenerator
 
 # Configure logging

@@ -22,7 +22,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from app.core.config import settings
 from app.models.database import IncomingCustomer
-from app.services.matching_service import MatchingService
+from app.services.matching.matching_service import MatchingService
 
 # Configure logging
 logging.basicConfig(

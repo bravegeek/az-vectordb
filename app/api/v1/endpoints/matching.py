@@ -11,7 +11,7 @@ from sqlalchemy import desc
 from app.core.database import get_db
 from app.models.database import IncomingCustomer, MatchingResult, Customer
 from app.models.schemas import CustomerMatchResponse, MatchResult
-from app.services.matching_service import matching_service
+from app.services.matching.matching_service import matching_service
 
 logger = logging.getLogger(__name__)
 router = APIRouter()

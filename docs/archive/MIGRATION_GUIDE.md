@@ -13,7 +13,7 @@ This guide helps you transition from the old flat project structure to the new o
 | `app/database.py` | `app/core/database.py` | Database connection management |
 | `app/models.py` | `app/models/database.py` + `app/models/schemas.py` | Split into DB models and API schemas |
 | `app/embedding_service.py` | `app/services/embedding_service.py` | Business logic service |
-| `app/matching_service.py` | `app/services/matching_service.py` | Business logic service |
+| `app/matching_service.py` | `app/services/matching/matching_service.py` | Business logic service |
 | `app/import/` | `scripts/` | Utility scripts moved |
 
 ### API Endpoint Changes

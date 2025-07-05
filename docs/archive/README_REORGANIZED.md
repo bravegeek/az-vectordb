@@ -30,7 +30,7 @@ az-vectordb/
 │   ├── services/                # Business logic services
 │   │   ├── __init__.py
 │   │   ├── embedding_service.py # Azure OpenAI embedding service
-│   │   └── matching_service.py  # Customer matching service
+│   │   └── matching/           # Modular customer matching services
 │   └── utils/                   # Utility functions
 │       ├── __init__.py
 │       └── helpers.py           # Common helper functions
@@ -168,103 +168,3 @@ pytest tests/integration/
 # API tests only
 pytest tests/test_api.py
 ```
-
-## 🔧 Development Tools
-
-### Code Formatting
-```bash
-# Format code with Black
-black app/ tests/
-
-# Sort imports with isort
-isort app/ tests/
-
-# Type checking with mypy
-mypy app/
-```
-
-### Linting
-```bash
-# Run flake8
-flake8 app/ tests/
-
-# Run bandit for security
-bandit -r app/
-```
-
-### Pre-commit Hooks
-```bash
-# Install pre-commit hooks
-pre-commit install
-
-# Run all hooks
-pre-commit run --all-files
-```
-
-## 📚 API Documentation
-
-Once the application is running, visit:
-- **Interactive API Docs**: http://localhost:8000/docs
-- **ReDoc Documentation**: http://localhost:8000/redoc
-
-## 🔄 Migration from Old Structure
-
-The old `main.py` file is still available for reference. To migrate:
-
-1. **Update imports** in any custom scripts
-2. **Use new endpoints** with `/api/v1/` prefix
-3. **Update configuration** to use new settings structure
-
-### Endpoint Changes
-- Old: `/customers` → New: `/api/v1/customers/`
-- Old: `/health` → New: `/api/v1/health/`
-- Old: `/customers/match/{id}` → New: `/api/v1/matching/{id}`
-
-## 🏗️ Architecture Benefits
-
-### 1. **Scalability**
-- Modular design allows easy addition of new features
-- Service layer can be easily extended or replaced
-- API versioning support for future changes
-
-### 2. **Maintainability**
-- Clear separation of concerns
-- Consistent coding patterns
-- Comprehensive testing coverage
-- Automated code quality checks
-
-### 3. **Developer Experience**
-- Modern development tools
-- Clear project structure
-- Comprehensive documentation
-- Easy testing and debugging
-
-### 4. **Production Readiness**
-- Proper error handling
-- Logging configuration
-- Health checks
-- Performance monitoring support
-
-## 🤝 Contributing
-
-1. Follow the established project structure
-2. Add tests for new features
-3. Run code quality checks before committing
-4. Update documentation as needed
-5. Use conventional commit messages
-
-## 📄 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 🆘 Support
-
-For issues and questions:
-1. Check the documentation
-2. Review existing issues
-3. Create a new issue with detailed information
-4. Contact the development team
-
----
-
-**Note**: This reorganization maintains full backward compatibility while providing a much more maintainable and scalable codebase structure. 
