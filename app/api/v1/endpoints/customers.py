@@ -24,12 +24,12 @@ async def create_customer(customer: CustomerCreate, db: Session = Depends(get_db
     try:
         # Generate embeddings
         company_embedding, profile_embedding = embedding_service.generate_customer_embeddings(
-            customer.dict()
+            customer.model_dump()
         )
         
         # Create customer record
         db_customer = Customer(
-            **customer.dict(),
+            **customer.model_dump(),
             company_name_embedding=company_embedding,
             full_profile_embedding=profile_embedding
         )
@@ -60,12 +60,12 @@ async def create_incoming_customer(customer: IncomingCustomerCreate, db: Session
     try:
         # Generate embeddings
         company_embedding, profile_embedding = embedding_service.generate_customer_embeddings(
-            customer.dict()
+            customer.model_dump()
         )
         
         # Create incoming customer record
         db_incoming = IncomingCustomer(
-            **customer.dict(),
+            **customer.model_dump(),
             company_name_embedding=company_embedding,
             full_profile_embedding=profile_embedding
         )

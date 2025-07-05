@@ -2,14 +2,14 @@
 
 from datetime import datetime
 from typing import Optional, List
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, EmailStr, validator
 
 
 class CustomerBase(BaseModel):
     """Base customer model for API"""
-    company_name: str = Field(..., description="Company name")
+    company_name: str = Field(..., min_length=1, description="Company name (cannot be empty)")
     contact_name: Optional[str] = Field(None, description="Primary contact name")
-    email: Optional[str] = Field(None, description="Email address")
+    email: Optional[EmailStr] = Field(None, description="Email address")
     phone: Optional[str] = Field(None, description="Phone number")
     address_line1: Optional[str] = Field(None, description="Address line 1")
     address_line2: Optional[str] = Field(None, description="Address line 2")
@@ -18,10 +18,28 @@ class CustomerBase(BaseModel):
     postal_code: Optional[str] = Field(None, description="Postal code")
     country: Optional[str] = Field(None, description="Country")
     industry: Optional[str] = Field(None, description="Industry")
-    annual_revenue: Optional[float] = Field(None, description="Annual revenue")
-    employee_count: Optional[int] = Field(None, description="Number of employees")
+    annual_revenue: Optional[float] = Field(None, ge=0, description="Annual revenue (must be non-negative)")
+    employee_count: Optional[int] = Field(None, ge=0, description="Number of employees (must be non-negative)")
     website: Optional[str] = Field(None, description="Website URL")
     description: Optional[str] = Field(None, description="Company description")
+
+    @validator('company_name')
+    def validate_company_name(cls, v):
+        if not v or not v.strip():
+            raise ValueError('Company name cannot be empty')
+        return v.strip()
+
+    @validator('annual_revenue')
+    def validate_annual_revenue(cls, v):
+        if v is not None and v < 0:
+            raise ValueError('Annual revenue cannot be negative')
+        return v
+
+    @validator('employee_count')
+    def validate_employee_count(cls, v):
+        if v is not None and v < 0:
+            raise ValueError('Employee count cannot be negative')
+        return v
 
 
 class CustomerCreate(CustomerBase):
@@ -79,9 +97,9 @@ class CustomerMatchResponse(BaseModel):
 
 class SimilaritySearchRequest(BaseModel):
     """Similarity search request model"""
-    query_text: str = Field(..., description="Text to search for similar customers")
-    similarity_threshold: Optional[float] = Field(0.8, description="Minimum similarity threshold")
-    max_results: Optional[int] = Field(10, description="Maximum number of results")
+    query_text: str = Field(..., min_length=1, description="Text to search for similar customers")
+    similarity_threshold: Optional[float] = Field(0.8, ge=0, le=1, description="Minimum similarity threshold (0-1)")
+    max_results: Optional[int] = Field(10, ge=1, le=100, description="Maximum number of results (1-100)")
 
 
 class SimilaritySearchResult(BaseModel):

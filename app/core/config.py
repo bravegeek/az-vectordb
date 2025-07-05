@@ -10,39 +10,34 @@ class Settings(BaseSettings):
     # Application settings
     app_name: str = "Customer Matching POC"
     app_version: str = "1.0.0"
-    debug: bool = False
+    debug: bool = True
     log_level: str = "INFO"
     
     # API settings
     api_host: str = "0.0.0.0"
     api_port: int = 8000
     
-    # Database settings
+    # PostgreSQL Configuration
     postgres_host: Optional[str] = None
     postgres_port: int = 5432
-    postgres_user: str = "postgres"
+    postgres_db: str = "customer_matching"
+    postgres_user: str = "pgadmin"
     postgres_password: Optional[str] = None
-    postgres_database: str = "vectordb"
-    postgres_schema: str = "customer_data"
     
-    # Additional database field to match .env file
-    postgres_db: Optional[str] = None
-    
-    # Azure OpenAI settings
+    # Azure OpenAI Configuration
     azure_openai_endpoint: Optional[str] = None
     azure_openai_api_key: Optional[str] = None
-    azure_openai_api_version: str = "2024-02-15-preview"
     azure_openai_deployment_name: str = "text-embedding-ada-002"
+    azure_openai_api_version: str = "2023-12-01-preview"
     
-    # Azure Key Vault settings (from .env file)
+    # Azure Key Vault (Optional - for production)
     azure_key_vault_url: Optional[str] = None
     use_key_vault: bool = False
     
-    # Matching strategy settings
+    # Similarity Thresholds
     default_similarity_threshold: float = 0.8
     high_confidence_threshold: float = 0.9
     potential_match_threshold: float = 0.75
-    exact_match_threshold: float = 0.95
     
     # Exact matching weights
     exact_company_name_weight: float = 0.4
@@ -85,11 +80,16 @@ class Settings(BaseSettings):
     )
     
     def _build_db_url(self, async_mode: bool = False) -> str:
-        db_name = self.postgres_db or self.postgres_database
-        if not self.postgres_host or not self.postgres_password:
+        host = self.postgres_host
+        port = self.postgres_port
+        user = self.postgres_user
+        password = self.postgres_password
+        db_name = self.postgres_db
+            
+        if not host or not password:
             raise ValueError("Database host and password are required")
         driver = "postgresql+asyncpg" if async_mode else "postgresql"
-        return f"{driver}://{self.postgres_user}:{self.postgres_password}@{self.postgres_host}:{self.postgres_port}/{db_name}"
+        return f"{driver}://{user}:{password}@{host}:{port}/{db_name}"
 
     @property
     def database_url(self) -> str:
