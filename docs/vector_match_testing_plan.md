@@ -28,6 +28,13 @@
 
 ## AI Agent Implementation Checklist
 
+### Rules for the AI Agent
+
+- implement as pytest tests
+- put them in /integration/vector_match
+- follow the naming convention of existing tests
+- mark tests with external dependencies as integration
+
 ### Pre-Testing Setup
 
 - [X] Verify database connection is working
