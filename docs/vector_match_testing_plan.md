@@ -34,6 +34,8 @@
 - put them in /integration/vector_match
 - follow the naming convention of existing tests
 - mark tests with external dependencies as integration
+- use pytest best practices
+- don't pass state between tests
 
 ### Pre-Testing Setup
 
@@ -70,7 +72,24 @@
 - [ ] Confirm new records have processing_status = 'pending'
 - [ ] Log actual counts for each variation intensity created
 
-### Step 4: Vector Matching Execution and Result Processing
+### Step 4.01: Vector Matching Execution and Result Processing
+
+- [ ] Import vector_matcher and result_processor modules
+- [ ] Initialize VectorMatcher and ResultProcessor instances
+- [ ] Query to get pending records: `SELECT * FROM incoming_customers WHERE processing_status = 'pending' LIMIT 5`
+-    [ ] Hold these records for the duration of the test
+- [ ] For each pending record :
+  - [ ] Call `find_matches(record, db)`
+  - [ ] Log number of matches found for record ID: `{record.request_id}`
+  - [ ] **Result Processing (Integrated):**
+    - [ ] Call `process_results(matches, request_id, db)` for the current record
+    - [ ] Verify results are stored in the table matching_results
+    - [ ] Confirm processing_status is updated to 'processed' for this record in the table incoming_customers
+    - [ ] Log processing completion for record ID: `{record.request_id}`
+- [ ] Handle any exceptions during matching and processing
+- [ ] Log total records processed and results saved
+
+### Step 4.05: Vector Matching Execution and Result Processing
 
 - [ ] Import vector_matcher and result_processor modules
 - [ ] Initialize VectorMatcher and ResultProcessor instances
