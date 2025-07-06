@@ -45,11 +45,11 @@
 
 ### Step 2: Pending Records Check
 
-- [ ] Execute query: `SELECT COUNT(*) FROM incoming_customers WHERE processing_status = 'pending'`
-- [ ] Store the count as `pending_count`
-- [ ] If `pending_count` >= 5: proceed to Step 4
-- [ ] If `pending_count` < 5: proceed to Step 3
-- [ ] Log the number of pending records found: `{pending_count}`
+- [X] Execute query: `SELECT COUNT(*) FROM incoming_customers WHERE processing_status = 'pending'`
+- [X] Store the count as `pending_count`
+- [X] If `pending_count` >= 5: proceed to Step 4
+- [X] If `pending_count` < 5: proceed to Step 3
+- [X] Log the number of pending records found: `{pending_count}`
 
 ### Step 3: Test Data Generation
 
