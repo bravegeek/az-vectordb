@@ -70,10 +70,10 @@
 - [ ] Confirm new records have processing_status = 'pending'
 - [ ] Log actual counts for each variation intensity created
 
-### Step 4: Vector Matching Execution
+### Step 4: Vector Matching Execution and Result Processing
 
-- [ ] Import vector_matcher module
-- [ ] Initialize VectorMatcher instance
+- [ ] Import vector_matcher and result_processor modules
+- [ ] Initialize VectorMatcher and ResultProcessor instances
 - [ ] Query to get pending records: `SELECT * FROM incoming_customers WHERE processing_status = 'pending' LIMIT 5`
 - [ ] Store the actual number of records to process as `records_to_process`
 - [ ] For each pending record (up to `records_to_process`):
@@ -81,10 +81,17 @@
   - [ ] Call `find_matches(record, db)`
   - [ ] Log number of matches found for record ID: `{record.request_id}`
   - [ ] Verify matches contain expected fields (customer_id, similarity_score, etc.)
-- [ ] Handle any exceptions during matching process
-- [ ] Log total records processed: `{records_to_process}`
+  - [ ] **Result Processing (Integrated):**
+    - [ ] Call `process_results(matches, request_id, db)` for the current record
+    - [ ] Verify results are stored in database
+    - [ ] Confirm processing_status is updated to 'processed' for this record
+    - [ ] Log processing completion for record ID: `{record.request_id}`
+- [ ] Handle any exceptions during matching and processing
+- [ ] Log total records processed and results saved: `{records_to_process}`
 
-### Step 5: Result Processing
+### Step 5: Result Processing (Alternative Approach)
+
+*Note: Result processing is now integrated into Step 4. This step can be used as an alternative approach if you prefer to separate matching and processing into distinct phases.*
 
 - [ ] Import result_processor module
 - [ ] Initialize ResultProcessor instance
@@ -115,7 +122,7 @@
 - [ ] **Status Verification:**
   - [ ] Query: `SELECT COUNT(*) FROM incoming_customers WHERE processing_status = 'processed'`
   - [ ] Store processed count as `processed_count`
-  - [ ] Verify `processed_count` matches `records_to_process` from Step 4
+  - [ ] Verify `processed_count` matches `records_to_process` from Step 4 (integrated matching and processing)
   - [ ] Log status verification results: `{processed_count} records processed`
 - [ ] **Similarity Score Validation:**
   - [ ] Query: `SELECT COUNT(*) FROM matching_results WHERE similarity_score < 0.0 OR similarity_score > 1.0`

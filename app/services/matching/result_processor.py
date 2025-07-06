@@ -45,13 +45,7 @@ class ResultProcessor:
                 db.add(db_result)
             
             # Update incoming customer processing status
-            incoming_customer = db.query(IncomingCustomer).filter(IncomingCustomer.request_id == request_id).first()
-            if incoming_customer:
-                setattr(incoming_customer, 'processing_status', "processed")
-                setattr(incoming_customer, 'processed_date', datetime.now())
-                logger.info(f"Updated processing status for request_id {request_id}: processed")
-            else:
-                logger.warning(f"Incoming customer with request_id {request_id} not found for status update")
+            self.update_processing_status(request_id, "processed", db)
             
             db.commit()
             logger.info(f"Stored {len(matches)} matching results for request_id {request_id}")
