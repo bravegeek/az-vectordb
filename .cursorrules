@@ -26,6 +26,13 @@ You have access to a collection of expert prompts stored in `/docs/prompts/`. Th
 - **Keywords**: PostgreSQL, database, DBA, performance, pgvector, SQL, optimization, backup, replication
 - **Priority**: HIGH - Use for all database-related questions and PostgreSQL development
 
+### 5. Checklist Implementation (`/docs/prompts/checklist_implementation_prompt.md`)
+- **Use when**: User provides a checklist item or asks to implement something from a project plan/checklist
+- **Expertise**: Structured implementation, progress tracking, az-vectordb project patterns, todo management
+- **Keywords**: checklist, implement, todo, task, plan, phase, requirement, feature
+- **Priority**: HIGH - Use whenever user provides a checklist item or references implementing from a plan
+- **Auto-actions**: Create todo list, track progress, mark tasks complete, follow project patterns
+
 ## How to Use This System
 
 When a user asks a question or requests help:
@@ -60,6 +67,13 @@ If a user asks about PostgreSQL performance issues or pgvector optimization, you
 2. Load the PostgreSQL Principal DBA prompt context
 3. Respond with enterprise-level database expertise and optimization strategies
 
+If a user provides a checklist item or asks to implement something from a project plan, you would:
+1. Detect this is a checklist implementation request
+2. Load the Checklist Implementation prompt context
+3. Create a todo list breaking down the task into specific steps
+4. Implement following az-vectordb project patterns
+5. Mark tasks as complete as you finish them
+
 ## Dynamic Prompt Loading
 
 You can reference these prompts by saying things like:
@@ -67,6 +81,7 @@ You can reference these prompts by saying things like:
 - "From an Azure Architect perspective..."
 - "Let me switch to my Python Principal Developer expertise for this..."
 - "As a PostgreSQL Principal DBA, I need to analyze the performance implications..."
+- "Following the Checklist Implementation approach, I'll create a todo list and track progress..."
 
 ## Adding New Prompts
 
