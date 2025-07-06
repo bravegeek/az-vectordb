@@ -57,6 +57,17 @@ def db_session(db_engine):
 
 
 @pytest.fixture
+def db_session_persistent(db_engine):
+    """Create test database session WITHOUT transaction rollback - for debugging"""
+    session = TestingSessionLocal()
+    
+    yield session
+    
+    # No rollback - changes persist
+    session.close()
+
+
+@pytest.fixture
 def client(db_session):
     """Create test client with overridden database dependency"""
     app.dependency_overrides[get_db] = lambda: db_session

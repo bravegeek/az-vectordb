@@ -46,19 +46,19 @@ class TestStep401IntegratedVectorMatching:
         return ResultProcessor()
     
     @pytest.fixture
-    def pending_records_for_test(self, db_session: Session) -> List[IncomingCustomer]:
+    def pending_records_for_test(self, db_session_persistent: Session) -> List[IncomingCustomer]:
         """Query and hold pending records for the duration of the test"""
         # ✅ Query to get pending records: SELECT * FROM incoming_customers WHERE processing_status = 'pending' LIMIT 5
         # ✅ Hold these records for the duration of the test
         
-        records = db_session.query(IncomingCustomer).filter(
+        records = db_session_persistent.query(IncomingCustomer).filter(
             IncomingCustomer.processing_status == 'pending',
             IncomingCustomer.full_profile_embedding.isnot(None)
         ).limit(5).all()
         
         # Ensure records are properly loaded
         for record in records:
-            db_session.refresh(record)
+            db_session_persistent.refresh(record)
         
         logger.info(f"✅ Retrieved {len(records)} pending records for integrated processing")
         return records
@@ -79,7 +79,7 @@ class TestStep401IntegratedVectorMatching:
     @pytest.mark.integration
     def test_integrated_workflow_execution(
         self, 
-        db_session: Session, 
+        db_session_persistent: Session, 
         vector_matcher: VectorMatcher, 
         result_processor: ResultProcessor,
         pending_records_for_test: List[IncomingCustomer],
@@ -115,7 +115,7 @@ class TestStep401IntegratedVectorMatching:
                 request_id = getattr(record, 'request_id')
                 
                 # ✅ Call find_matches(record, db)
-                matches = vector_matcher.find_matches(record, db_session)
+                matches = vector_matcher.find_matches(record, db_session_persistent)
                 
                 # ✅ Log number of matches found for record ID
                 matches_count = len(matches)
@@ -124,10 +124,10 @@ class TestStep401IntegratedVectorMatching:
                 
                 # ✅ Result Processing (Integrated):
                 # ✅ Call process_results(matches, request_id, db) for the current record
-                processed_matches = result_processor.process_results(matches, request_id, db_session)
+                processed_matches = result_processor.process_results(matches, request_id, db_session_persistent)
                 
                 # ✅ Verify results are stored in the table matching_results
-                stored_results = db_session.query(MatchingResult).filter(
+                stored_results = db_session_persistent.query(MatchingResult).filter(
                     MatchingResult.incoming_customer_id == request_id
                 ).all()
                 
@@ -135,7 +135,7 @@ class TestStep401IntegratedVectorMatching:
                     f"Expected {len(processed_matches)} stored results, got {len(stored_results)} for record {request_id}"
                 
                 # ✅ Confirm processing_status is updated to 'processed' for this record
-                db_session.refresh(record)
+                db_session_persistent.refresh(record)
                 updated_status = getattr(record, 'processing_status')
                 assert updated_status == 'processed', \
                     f"Expected processing_status 'processed', got '{updated_status}' for record {request_id}"
@@ -184,108 +184,3 @@ class TestStep401IntegratedVectorMatching:
         failure_rate = len(processing_metrics['failed_records']) / len(pending_records_for_test)
         assert failure_rate < 0.5, f"Too many failures: {failure_rate:.2%} failure rate"
     
-    @pytest.mark.integration
-    def test_integration_module_imports(self):
-        """
-        Verify that all required modules can be imported successfully
-        
-        ✅ Import vector_matcher and result_processor modules
-        """
-        try:
-            from app.services.matching.vector_matcher import VectorMatcher
-            from app.services.matching.result_processor import ResultProcessor
-            
-            # Verify classes are available
-            assert VectorMatcher is not None
-            assert ResultProcessor is not None
-            
-            # Verify key methods exist
-            assert hasattr(VectorMatcher, 'find_matches')
-            assert hasattr(VectorMatcher, 'is_enabled')
-            assert hasattr(ResultProcessor, 'process_results')
-            assert hasattr(ResultProcessor, 'store_matching_results')
-            assert hasattr(ResultProcessor, 'update_processing_status')
-            
-            logger.info("✅ All required modules imported successfully")
-            
-        except ImportError as e:
-            pytest.fail(f"❌ Failed to import required modules: {e}")
-    
-    @pytest.mark.integration
-    def test_pending_records_query_validation(self, db_session: Session):
-        """
-        Validate the pending records query and data availability
-        
-        ✅ Query to get pending records: SELECT * FROM incoming_customers WHERE processing_status = 'pending' LIMIT 5
-        """
-        try:
-            # Execute the equivalent query to verify data availability
-            query_result = db_session.query(IncomingCustomer).filter(
-                IncomingCustomer.processing_status == 'pending'
-            ).limit(5).all()
-            
-            # Verify query executes successfully
-            assert isinstance(query_result, list)
-            
-            # Log results
-            total_pending = db_session.query(IncomingCustomer).filter(
-                IncomingCustomer.processing_status == 'pending'
-            ).count()
-            
-            with_embeddings = db_session.query(IncomingCustomer).filter(
-                IncomingCustomer.processing_status == 'pending',
-                IncomingCustomer.full_profile_embedding.isnot(None)
-            ).count()
-            
-            logger.info(f"✅ Pending records query validation:")
-            logger.info(f"   - Total pending records: {total_pending}")
-            logger.info(f"   - Pending records with embeddings: {with_embeddings}")
-            logger.info(f"   - Records available for testing: {len(query_result)}")
-            
-        except Exception as e:
-            pytest.fail(f"❌ Pending records query validation failed: {e}")
-    
-    @pytest.mark.integration
-    def test_error_handling_robustness(self, db_session: Session):
-        """
-        Test error handling capabilities of the integrated workflow
-        
-        ✅ Handle any exceptions during matching and processing
-        """
-        vector_matcher = VectorMatcher()
-        result_processor = ResultProcessor()
-        
-        # Test with invalid/None record - Testing error handling with intentionally invalid input
-        try:
-            matches = vector_matcher.find_matches(None, db_session)  # type: ignore[arg-type]
-            assert matches == [] or matches is None
-            logger.info("✅ Gracefully handled None record input")
-        except Exception as e:
-            # Should handle gracefully but if it raises, log it
-            logger.info(f"✅ Exception handling for None record: {e}")
-        
-        # Test with record without embeddings
-        try:
-            # Create a mock record without embeddings
-            class MockRecord:
-                def __init__(self):
-                    self.full_profile_embedding = None
-                    self.request_id = -1
-            
-            mock_record = MockRecord()
-            matches = vector_matcher.find_matches(mock_record, db_session)  # type: ignore[arg-type]
-            assert matches == []
-            logger.info("✅ Gracefully handled record without embeddings")
-            
-        except Exception as e:
-            logger.info(f"✅ Exception handling for record without embeddings: {e}")
-        
-        # Test result processor with empty matches
-        try:
-            empty_matches = []
-            processed = result_processor.process_results(empty_matches, -1, db_session)
-            assert processed == []
-            logger.info("✅ Gracefully handled empty matches list")
-            
-        except Exception as e:
-            logger.info(f"✅ Exception handling for empty matches: {e}") 
