@@ -59,6 +59,7 @@ Based on the cursor rules, please adopt these expert personas as relevant:
 - PowerShell scripts work correctly on Windows
 - Database operations are optimized for pgvector
 - **All tasks are marked as complete** in the todo system
+- Tasks are marked as complete in the checklist or plan document
 - [Additional success criteria specific to the task]
 
 ## Instructions
