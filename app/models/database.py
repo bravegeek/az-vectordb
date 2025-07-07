@@ -1,8 +1,9 @@
 """SQLAlchemy models for Customer Matching POC"""
 from datetime import datetime
 from typing import Optional, List
+from decimal import Decimal
 from sqlalchemy import Column, Integer, String, Text, DECIMAL, DateTime, Boolean, ForeignKey, JSON
-from sqlalchemy.orm import relationship, declarative_base
+from sqlalchemy.orm import relationship, declarative_base, Mapped, mapped_column
 from sqlalchemy.sql import func
 from pgvector.sqlalchemy import Vector
 
@@ -46,7 +47,7 @@ class IncomingCustomer(Base):
     __tablename__ = "incoming_customers"
     __table_args__ = {"schema": "customer_data"}
     
-    request_id = Column(Integer, primary_key=True, index=True)
+    request_id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     company_name = Column(String(255), nullable=False)
     contact_name = Column(String(255))
     email = Column(String(255))
@@ -62,15 +63,15 @@ class IncomingCustomer(Base):
     employee_count = Column(Integer)
     website = Column(String(255))
     description = Column(Text)
-    request_date = Column(DateTime, default=func.now())
+    request_date: Mapped[datetime] = mapped_column(DateTime, default=func.now())
     
     # Vector embeddings
     company_name_embedding = Column(Vector(1536))
     full_profile_embedding = Column(Vector(1536))
     
     # Processing status
-    processing_status = Column(String(20), default="pending")
-    processed_date = Column(DateTime)
+    processing_status: Mapped[str] = mapped_column(String(20), default="pending")
+    processed_date: Mapped[Optional[datetime]] = mapped_column(DateTime)
     
     # Relationships
     matches = relationship("MatchingResult", foreign_keys="MatchingResult.incoming_customer_id", back_populates="incoming_customer")
@@ -81,16 +82,16 @@ class MatchingResult(Base):
     __tablename__ = "matching_results"
     __table_args__ = {"schema": "customer_data"}
     
-    match_id = Column(Integer, primary_key=True, index=True)
-    incoming_customer_id = Column(Integer, ForeignKey("customer_data.incoming_customers.request_id"))
-    matched_customer_id = Column(Integer, ForeignKey("customer_data.customers.customer_id"))
-    similarity_score = Column(DECIMAL(5, 4))
-    match_type = Column(String(50))  # 'exact', 'high_confidence', 'potential', 'low_confidence'
-    match_criteria = Column(JSON)
-    confidence_level = Column(DECIMAL(5, 4))
-    created_date = Column(DateTime, default=func.now())
-    reviewed = Column(Boolean, default=False)
-    reviewer_notes = Column(Text)
+    match_id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    incoming_customer_id: Mapped[int] = mapped_column(Integer, ForeignKey("customer_data.incoming_customers.request_id"))
+    matched_customer_id: Mapped[int] = mapped_column(Integer, ForeignKey("customer_data.customers.customer_id"))
+    similarity_score: Mapped[Optional[Decimal]] = mapped_column(DECIMAL(5, 4))
+    match_type: Mapped[str] = mapped_column(String(50))  # 'exact', 'high_confidence', 'potential', 'low_confidence'
+    match_criteria: Mapped[Optional[dict]] = mapped_column(JSON)
+    confidence_level: Mapped[Optional[Decimal]] = mapped_column(DECIMAL(5, 4))
+    created_date: Mapped[datetime] = mapped_column(DateTime, default=func.now())
+    reviewed: Mapped[bool] = mapped_column(Boolean, default=False)
+    reviewer_notes: Mapped[Optional[str]] = mapped_column(Text)
     
     # Relationships
     incoming_customer = relationship("IncomingCustomer", foreign_keys=[incoming_customer_id], back_populates="matches")
