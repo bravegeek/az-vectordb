@@ -26,7 +26,7 @@ env_file_path = os.path.join(os.path.dirname(__file__), '..', 'app', '.env')
 if os.path.exists(env_file_path):
     os.environ['ENV_FILE'] = env_file_path
 
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, text, func
 from sqlalchemy.orm import sessionmaker
 from app.core.config import settings
 from app.models.database import Customer, IncomingCustomer
@@ -82,7 +82,7 @@ class IncomingCustomerGenerator:
         """Retrieve existing customers from database for base data"""
         try:
             with self.SessionLocal() as db:
-                customers = db.query(Customer).limit(limit).all()
+                customers = db.query(Customer).order_by(func.random()).limit(limit).all()
                 logger.info(f"Retrieved {len(customers)} existing customers for base data")
                 return customers
         except Exception as e:
