@@ -64,20 +64,42 @@ class VectorMatcher(BaseMatcher):
         return matches
     
     def _prepare_embedding(self, embedding) -> List[float]:
-        """Convert numpy array to list if needed"""
+        """Convert numpy array to list if needed and validate normalization"""
         if isinstance(embedding, np.ndarray):
-            return embedding.tolist()
-        return embedding
+            embedding_list = embedding.tolist()
+        else:
+            embedding_list = embedding
+        
+        # Validate embedding is normalized for accurate cosine similarity
+        # For production, embeddings should have magnitude ~1.0
+        magnitude = sum(x * x for x in embedding_list) ** 0.5
+        if not (0.99 <= magnitude <= 1.01):
+            logger.warning(f"Embedding not normalized: magnitude={magnitude:.4f}")
+        
+        return embedding_list
     
     def _execute_vector_query(self, query_embedding: List[float], db: Session):
-        """Execute vector similarity query"""
+        """Execute vector similarity query with optimized distance calculation"""
         query = text("""
+            WITH distance_calc AS (
+                SELECT 
+                    customer_id, 
+                    company_name, 
+                    contact_name, 
+                    email,
+                    full_profile_embedding <=> CAST(:query_embedding AS vector(1536)) as distance
+                FROM customer_data.customers 
+                WHERE full_profile_embedding IS NOT NULL
+            )
             SELECT 
-                customer_id, company_name, contact_name, email,
-                1 - (full_profile_embedding <=> CAST(:query_embedding AS vector(1536))) as similarity_score
-            FROM customer_data.customers 
-            WHERE 1 - (full_profile_embedding <=> CAST(:query_embedding AS vector(1536))) > :threshold
-            ORDER BY full_profile_embedding <=> CAST(:query_embedding AS vector(1536))
+                customer_id, 
+                company_name, 
+                contact_name, 
+                email,
+                (1 - distance) as similarity_score
+            FROM distance_calc
+            WHERE (1 - distance) > :threshold
+            ORDER BY distance  -- Sort by distance (ascending = most similar first)
             LIMIT :max_results
         """)
         
@@ -97,4 +119,11 @@ class VectorMatcher(BaseMatcher):
             settings.high_confidence_threshold,
             settings.default_similarity_threshold,
             settings.potential_match_threshold
-        ) 
+        )
+    
+    def _log_query_performance(self, query_time: float, result_count: int):
+        """Log performance metrics for monitoring"""
+        logger.info(f"Vector query: {query_time:.3f}s, {result_count} results")
+        
+        if query_time > 1.0:  # Threshold for slow queries
+            logger.warning(f"Slow vector query detected: {query_time:.3f}s") 
