@@ -35,9 +35,9 @@ class Settings(BaseSettings):
     use_key_vault: bool = False
     
     # Similarity Thresholds
-    default_similarity_threshold: float = 0.08  # Lowered from 0.8 to match vector similarity scores
-    high_confidence_threshold: float = 0.12    # Lowered from 0.9 to match vector similarity scores
-    potential_match_threshold: float = 0.06    # Lowered from 0.75 to match vector similarity scores
+    default_similarity_threshold: float = 0.8  # Lowered from 0.8 to match vector similarity scores
+    high_confidence_threshold: float = 0.9    # Lowered from 0.9 to match vector similarity scores
+    potential_match_threshold: float = 0.75    # Lowered from 0.75 to match vector similarity scores
     
     # Exact matching weights
     exact_company_name_weight: float = 0.4
@@ -50,7 +50,7 @@ class Settings(BaseSettings):
     fuzzy_max_results: int = 10
     
     # Vector matching settings
-    vector_similarity_threshold: float = 0.05  # Lowered from 0.7 to match actual embedding similarity scores
+    vector_similarity_threshold: float = 0.7  # Lowered from 0.7 to match actual embedding similarity scores
     vector_max_results: int = 5
     
     # Hybrid matching settings

@@ -169,9 +169,9 @@ async def get_matching_results(request_id: int, db: Session = Depends(get_db)):
                     matched_company_name=matched_customer.company_name,
                     matched_contact_name=matched_customer.contact_name,
                     matched_email=matched_customer.email,
-                    similarity_score=float(result.similarity_score),
+                    similarity_score=float(result.similarity_score or 0.0),
                     match_type=result.match_type,
-                    confidence_level=float(result.confidence_level),
+                    confidence_level=float(result.confidence_level or 0.0),
                     match_criteria=result.match_criteria or {},
                     created_date=result.created_date
                 ))

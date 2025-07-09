@@ -54,7 +54,7 @@ class TestStep401IntegratedVectorMatching:
         records = db_session_persistent.query(IncomingCustomer).filter(
             IncomingCustomer.processing_status == 'pending',
             IncomingCustomer.full_profile_embedding.isnot(None)
-        ).limit(5).all()
+        ).limit(20).all()
         
         # Ensure records are properly loaded
         for record in records:
